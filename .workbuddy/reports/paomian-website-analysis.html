@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaoMian Hax 官网深度分析报告</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --ink:#1a2233; --sub:#5b6472; --line:#e6e9ef;
+    --blue:#2563eb; --blue-bg:#eef4ff; --red:#dc2626; --red-bg:#fef2f2;
+    --amber:#b45309; --amber-bg:#fffbeb; --green:#16a34a; --green-bg:#f0fdf4;
+    --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;font-size:15px}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px}
+
+  /* Hero */
+  .hero{background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 55%,#4f7cff 100%);border-radius:20px;padding:44px 40px;color:#fff;position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.08)}
+  .hero h1{font-size:28px;font-weight:700;letter-spacing:.5px}
+  .hero .sub{margin-top:10px;font-size:15px;opacity:.85;max-width:640px}
+  .hero .meta{margin-top:22px;display:flex;flex-wrap:wrap;gap:10px}
+  .hero .chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:5px 14px;font-size:12.5px;backdrop-filter:blur(4px)}
+
+  /* Score board */
+  .scoreboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:22px}
+  .score-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 16px;text-align:center}
+  .score-card .label{font-size:12.5px;color:var(--sub)}
+  .score-card .val{font-size:30px;font-weight:700;margin-top:2px}
+  .score-card .bar{height:6px;border-radius:4px;background:#eef0f4;margin-top:10px;overflow:hidden}
+  .score-card .bar i{display:block;height:100%;border-radius:4px}
+  .note{font-size:12px;color:var(--sub);margin-top:14px}
+
+  /* Section */
+  section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:28px 32px;margin-top:22px}
+  h2{font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  h2 .no{background:var(--blue);color:#fff;width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex:none}
+  h3{font-size:16px;font-weight:600;margin:22px 0 10px;color:#111827}
+  p{margin:8px 0;color:#2a3344}
+  ul,ol{margin:8px 0 8px 22px}
+  li{margin:5px 0}
+  strong{color:#111827}
+
+  /* badges */
+  .badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600}
+  .b-ok{background:var(--green-bg);color:var(--green)}
+  .b-warn{background:var(--amber-bg);color:var(--amber)}
+  .b-bad{background:var(--red-bg);color:var(--red)}
+  .b-info{background:var(--blue-bg);color:var(--blue)}
+
+  /* table */
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  th{background:#f8fafc;text-align:left;padding:9px 12px;border:1px solid var(--line);font-weight:600;color:#374151;white-space:nowrap}
+  td{padding:8px 12px;border:1px solid var(--line);vertical-align:top}
+  tr:hover td{background:#fafbfd}
+  .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  /* code block */
+  pre{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:16px 18px;font-size:12.5px;overflow-x:auto;line-height:1.6;margin:12px 0}
+  code{font-family:Consolas,"Courier New",monospace}
+  .hl-red{color:#f87171;font-weight:700}
+  .hl-green{color:#4ade80}
+  .hl-yellow{color:#fbbf24}
+
+  /* grid */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .kv{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+  .kv .k{font-size:12px;color:var(--sub)}
+  .kv .v{font-size:14px;font-weight:600;margin-top:2px;word-break:break-all}
+
+  /* priority cards */
+  .prio{display:flex;gap:14px;padding:16px 18px;border-radius:12px;margin:12px 0;align-items:flex-start}
+  .prio .tag{flex:none;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff}
+  .prio h4{font-size:14.5px;margin-bottom:4px}
+  .prio p{font-size:13.5px;color:var(--sub);margin:0}
+  .p0{background:var(--red-bg);border:1px solid #fecaca}.p0 .tag{background:var(--red)}
+  .p1{background:var(--amber-bg);border:1px solid #fde68a}.p1 .tag{background:var(--amber)}
+  .p2{background:var(--blue-bg);border:1px solid #bfdbfe}.p2 .tag{background:var(--blue)}
+
+  /* flow diagram */
+  .flow{display:flex;flex-direction:column;gap:0;margin:16px 0}
+  .flow-row{display:flex;align-items:center;gap:10px}
+  .node{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:8px 14px;font-size:13px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .node.page{border-color:var(--blue);background:var(--blue-bg);font-weight:600}
+  .node.dead{border-style:dashed;opacity:.55}
+  .edge{color:#94a3b8;font-size:11px;flex:none}
+  .branch{margin-left:26px;border-left:2px dashed #d7dde6;padding-left:18px;display:flex;flex-direction:column;gap:8px;margin-top:8px;margin-bottom:8px}
+
+  .footer-note{text-align:center;color:#9aa3b2;font-size:12.5px;margin-top:36px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin:10px 0}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+  a{color:var(--blue)}
+  .summary-callout{background:linear-gradient(135deg,#f8fafc,#eef4ff);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:14px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ HERO ============ -->
+  <div class="hero">
+    <h1>PaoMian Hax 官网 · 深度分析报告</h1>
+    <div class="sub">对「泡面辅助」官网（www.paomfz.com）的完整代码级审计：技术栈、资产清单、代码质量、SEO、性能、安全与合规，并给出分级优化路线图。</div>
+    <div class="meta">
+      <span class="chip">分析日期：2026-08-25</span>
+      <span class="chip">域 名：www.paomfz.com</span>
+      <span class="chip">托管：GitHub Pages（qqxiaochen/webw）</span>
+      <span class="chip">类型：纯静态站 · 无后端</span>
+      <span class="chip">仓库大小：约 400MB+（含 ZIP 资源）</span>
+    </div>
+  </div>
+
+  <!-- ============ 评分 ============ -->
+  <div class="scoreboard">
+    <div class="score-card"><div class="label">代码质量</div><div class="val" style="color:#dc2626">3.0</div><div class="bar"><i style="width:30%;background:#dc2626"></i></div></div>
+    <div class="score-card"><div class="label">SEO 与可发现性</div><div class="val" style="color:#b45309">4.5</div><div class="bar"><i style="width:45%;background:#b45309"></i></div></div>
+    <div class="score-card"><div class="label">性能与体验</div><div class="val" style="color:#b45309">4.0</div><div class="bar"><i style="width:40%;background:#b45309"></i></div></div>
+    <div class="score-card"><div class="label">安全与隐私</div><div class="val" style="color:#16a34a">7.0</div><div class="bar"><i style="width:70%;background:#16a34a"></i></div></div>
+    <div class="score-card"><div class="label">工程与维护性</div><div class="val" style="color:#dc2626">2.5</div><div class="bar"><i style="width:25%;background:#dc2626"></i></div></div>
+    <div class="score-card"><div class="label">综合健康度</div><div class="val" style="color:#b45309">4.0</div><div class="bar"><i style="width:40%;background:#b45309"></i></div></div>
+  </div>
+  <div class="note">评分 0-10（10 为最佳）。核心结论：<strong>网站能跑、能下载、能收款，但工程基础脆弱</strong>——首页 HTML 结构损坏、资产严重冗余、存在死链，且与「已用 Liquid Glass 重写」的预期状态不符。</div>
+
+  <!-- ============ 1 概览 ============ -->
+  <section>
+    <h2><span class="no">1</span>项目概览</h2>
+    <div class="grid2" style="margin-top:14px">
+      <div class="kv"><div class="k">项目定位</div><div class="v">CrossFire（穿越火线）第三方辅助工具下载站</div></div>
+      <div class="kv"><div class="k">目标受众</div><div class="v">欧美服（WE）/ 越南服（VN）/ 菲律宾服（PH）玩家，繁体中文 + 英文</div></div>
+      <div class="kv"><div class="k">核心业务</div><div class="v">付费授权（License）+ ZIP 压缩包直链下载 + 店铺/支付外链</div></div>
+      <div class="kv"><div class="k">技术栈</div><div class="v">HTML + CSS + jQuery 1.9.1/1.11.1/3.x + UIkit 2.x</div></div>
+      <div class="kv"><div class="k">部署方式</div><div class="v">GitHub Pages 静态托管，CNAME 绑定 www.paomfz.com</div></div>
+      <div class="kv"><div class="k">页面组成</div><div class="v">index.html（主站）+ download.html（下载）+ 404.html</div></div>
+      <div class="kv"><div class="k">外链生态</div><div class="v">pay.paomfz.com（支付）、mall.909net.cn（店铺）、Discord、Telegram、YouTube</div></div>
+      <div class="kv"><div class="k">内容语言</div><div class="v">页面无 lang 声明；正文繁体中文/英文混杂</div></div>
+    </div>
+
+    <h3>业务链路</h3>
+    <div class="flow">
+      <div class="flow-row"><div class="node page">index.html 首页</div><span class="edge">→</span><div class="node">店铺 909net.cn</div><span class="edge">→</span><div class="node">购买 License</div></div>
+      <div class="flow-row" style="margin-top:8px"><div class="node page">index.html 首页</div><span class="edge">→</span><div class="node">download.html</div><span class="edge">→</span><div class="node">ZIP 直链下载（WE/PH/VN）</div><span class="edge">→</span><div class="node">解压密码 123</div></div>
+      <div class="flow-row" style="margin-top:8px"><div class="node page">两个页面</div><span class="edge">→</span><div class="node">Discord / Telegram 社群</div><span class="edge">→</span><div class="node">售后/更新公告</div></div>
+    </div>
+  </section>
+
+  <!-- ============ 2 资产审计 ============ -->
+  <section>
+    <h2><span class="no">2</span>文件资产审计</h2>
+    <p>仓库总规模约 <strong>800MB</strong>（含 400MB 未跟踪的 webw.zip 备份），其中约 <strong>394MB 是 14 个辅助程序 ZIP 包</strong>。静态资源存在大量重复与死文件。</p>
+
+    <h3>2.1 页面引用完整性 <span class="badge b-bad">发现 1 处死链</span></h3>
+    <table>
+      <tr><th>页面</th><th>引用资源</th><th>状态</th></tr>
+      <tr><td rowspan="4">index.html</td><td>static/style.css · static/main.css</td><td><span class="badge b-ok">OK</span></td></tr>
+      <tr><td>static/footer.js（实为 jQuery 3.x 未压缩版，296KB）</td><td><span class="badge b-warn">OK 但命名误导</span></td></tr>
+      <tr><td>static/music.mp3（3.2MB，autoplay）</td><td><span class="badge b-warn">存在，体验负资产</span></td></tr>
+      <tr><td>static/favicon.ico</td><td><span class="badge b-ok">OK</span></td></tr>
+      <tr><td rowspan="5">download.html</td><td>static/css/core.css · coret.css</td><td><span class="badge b-warn">部分 UIkit 类缺失（见 §4.3）</span></td></tr>
+      <tr><td>static/js/jquery.min.js（jQuery 1.11.1）· core.js（UIkit 2.x）· coret.js</td><td><span class="badge b-ok">OK</span></td></tr>
+      <tr><td>down/we/5C72CA.zip（30.5MB，WE-260812）</td><td><span class="badge b-ok">OK</span></td></tr>
+      <tr><td>down/ph/7A638484.zip（32.5MB，PH-260806）</td><td><span class="badge b-ok">OK</span></td></tr>
+      <tr><td>down/vn/PaoMianHax-Vn-211103-2(Pass123).zip</td><td><span class="badge b-bad">MISS · 目录 down/vn/ 不存在</span></td></tr>
+    </table>
+
+    <h3>2.2 冗余与死文件清单</h3>
+    <table>
+      <tr><th>文件</th><th class="num">大小</th><th>问题</th></tr>
+      <tr><td>core.css（根目录）</td><td class="num">243.7KB</td><td>无人引用；static/css/core.css（251KB）为另一副本，两者内容不同</td></tr>
+      <tr><td>static/footer.js</td><td class="num">296KB</td><td>实为 jQuery 3.x 未压缩版却命名 footer.js；与另两份 jQuery 并存</td></tr>
+      <tr><td>static/js/jquery-1.9.1.min.js</td><td class="num">93.4KB</td><td>无人引用（被 jquery.min.js 1.11.1 取代）</td></tr>
+      <tr><td>static/js/yii.js</td><td class="num">20.7KB</td><td>无人引用（Yii2 框架模块，纯死代码）</td></tr>
+      <tr><td>static/js/APlayer.min.js / Meting.min.js / APlayer.min.css</td><td class="num">73.3KB</td><td>无人引用（音乐播放器组件，未启用）</td></tr>
+      <tr><td>static/css/base.css · popup.css</td><td class="num">22.7KB</td><td>无人引用；popup.css 与 css/style.css 字节相同</td></tr>
+      <tr><td>static/css/style.css 与 static/style.css</td><td class="num">132.6KB vs 6.9KB</td><td>同名不同内容，极易误用</td></tr>
+      <tr><td>down/speed/ 下 3 个 ZIP</td><td class="num">12.7MB ×3</td><td>gytidj.zip / PaoMianAccelerator.zip / PaoMianJiasu.zip 字节完全相同，同一文件复制 3 份</td></tr>
+      <tr><td>down/ph + down/we 历史 ZIP</td><td class="num">≈300MB</td><td>9 个旧版本包无人引用，仍占 GitHub 仓库容量与暴露风险</td></tr>
+    </table>
+
+    <h3>2.3 依赖关系全景（实测）</h3>
+    <div class="legend">
+      <span><i class="dot" style="background:#2563eb"></i>在用页面</span>
+      <span><i class="dot" style="background:#e6e9ef"></i>资源正常</span>
+      <span><i class="dot" style="background:#fde68a"></i>冗余/可疑</span>
+      <span><i class="dot" style="background:#fecaca"></i>死链/死代码</span>
+    </div>
+    <table>
+      <tr><th>页面</th><th>CSS 依赖</th><th>JS 依赖</th><th>内容资源</th></tr>
+      <tr>
+        <td><strong>index.html</strong>（22.6KB）</td>
+        <td>style.css ✅<br>main.css ✅</td>
+        <td>footer.js（jQuery 3.x 未压缩）⚠️</td>
+        <td>music.mp3 ⚠️ autoplay<br>YouTube iframe ⚠️ 国内不可达<br>SVG 图标（内联，结构损坏）❌</td>
+      </tr>
+      <tr>
+        <td><strong>download.html</strong>（8.4KB）</td>
+        <td>css/core.css ✅<br>css/coret.css ✅</td>
+        <td>jquery.min.js（1.11.1）✅<br>core.js（UIkit）✅<br>coret.js（IE 检测）⚠️ 逻辑过时</td>
+        <td>we/5C72CA.zip ✅<br>ph/7A638484.zip ✅<br>vn/…zip ❌ <span class="badge b-bad">死链</span></td>
+      </tr>
+      <tr>
+        <td><strong>404.html</strong>（9.5KB）</td>
+        <td>内联样式 ✅</td>
+        <td>—</td><td>—</td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ============ 3 代码质量 ============ -->
+  <section>
+    <h2><span class="no">3</span>代码质量分析 <span class="badge b-bad">评分 3.0 / 10</span></h2>
+
+    <h3>3.1 首页 HTML 结构严重损坏</h3>
+    <p>index.html 由可视化建站工具导出后手工拼接，<strong>标签嵌套错乱</strong>：第一个 <code>&lt;/body&gt;&lt;/html&gt;</code> 出现在 Discord 图标 SVG 的 <code>&lt;defs&gt;</code> 内部，其后又残留 <code>&lt;/defs&gt;&lt;/svg&gt;</code>、<code>&lt;audio&gt;</code> 和第二个 <code>&lt;/body&gt;&lt;/html&gt;</code>。同时第 199 行 <code>&lt;style type="text/css"&gt;</code> 未闭合就被 <code>&lt;/defs&gt;</code> 截断，直到页面尾部才以 <code>&lt;/style&gt;</code> 补上。</p>
+    <pre><code>...
+298  &lt;/body&gt;
+299  &lt;/html&gt;&lt;/style&gt;          <span class="hl-red">← 这个 /style 实际补的是 199 行未闭合的标签</span>
+300    &lt;/defs&gt;
+301    &lt;/svg&gt;                  <span class="hl-red">← Discord 图标在此才被"关闭"，但 body 已经结束了</span>
+302  &lt;/div&gt;&lt;/a&gt;
+...
+312  &lt;audio autoplay loop style="display:none"&gt;  <span class="hl-yellow">← 第二个 body 外的音频节点</span>
+315  &lt;/body&gt;
+316  &lt;/html&gt;</code></pre>
+    <p>现代浏览器容错可渲染，但会带来三个实际问题：<strong>① SVG 图标样式解析异常（Discord/Telegram 图标可能显示不全）；② 结构非法导致 W3C 校验全挂、SEO 蜘蛛解析歧义；③ 后续维护极易改坏。</strong> 该文件正是当前首页处于「待重写」状态的最强信号。</p>
+
+    <h3>3.2 一个页面装了三份 jQuery</h3>
+    <table>
+      <tr><th>副本</th><th>版本</th><th class="num">大小</th><th>是否引用</th><th>问题</th></tr>
+      <tr><td>static/footer.js</td><td>jQuery 3.x（未压缩）</td><td class="num">296KB</td><td>index.html</td><td>命名严重误导；未压缩版白白多传 ~210KB</td></tr>
+      <tr><td>static/js/jquery.min.js</td><td>jQuery 1.11.1</td><td class="num">95.8KB</td><td>download.html</td><td>2014 年版本，已知安全/兼容问题</td></tr>
+      <tr><td>static/js/jquery-1.9.1.min.js</td><td>jQuery 1.9.1</td><td class="num">93.4KB</td><td>无人引用</td><td>2013 年版本，死文件</td></tr>
+    </table>
+
+    <h3>3.3 遗留死代码与过时逻辑</h3>
+    <ul>
+      <li><strong>yii.js</strong>：来自 Yii2 框架（521 行），无任何页面引用，纯死代码。</li>
+      <li><strong>APlayer / Meting</strong>：音乐播放器整套组件（JS+CSS 共 73KB）从未被启用。</li>
+      <li><strong>coret.js</strong>：IE&lt;9 检测跳转 <code>/view/old</code>——该路径不存在，且 IE9 早已退出市场，逻辑完全失效。</li>
+      <li><strong>UIkit 样式缺失</strong>：download.html 用到 <code>uk-scrollspy / uk-toggle / uk-scroll</code>，但 core.css 中未找到对应样式类，动画与滚动行为可能失效。</li>
+    </ul>
+
+    <h3>3.4 工程管理</h3>
+    <ul>
+      <li><strong>无 .gitignore</strong>：400MB 的 webw.zip 与 .workbuddy/ 未跟踪——若误提交，GitHub 100MB 单文件限制将直接拒绝 push。</li>
+      <li><strong>提交信息失范</strong>：git log 中绝大多数提交信息为「1」，无法追溯变更意图。</li>
+      <li><strong>无构建/无压缩/无 lint</strong>：纯手工维护，CSS/JS 均未压缩、未合并。</li>
+    </ul>
+  </section>
+
+  <!-- ============ 4 SEO ============ -->
+  <section>
+    <h2><span class="no">4</span>SEO 与可发现性 <span class="badge b-warn">评分 4.5 / 10</span></h2>
+    <h3>已做对的</h3>
+    <ul>
+      <li>提交过搜索引擎验证：<span class="badge b-ok">baidu_verify_vjqHMTOxEG.html</span> 与 <span class="badge b-ok">googleedb8ea84a40e936d.html</span> 均在。</li>
+      <li>首页有 h1（PaoMian Hax）、h2（Function）层级；viewport 已声明。</li>
+      <li>CNAME 域名稳定，GitHub Pages 自带全球 CDN，抓取速度有保障。</li>
+    </ul>
+    <h3>关键缺失</h3>
+    <table>
+      <tr><th>问题</th><th>影响</th><th>位置</th></tr>
+      <tr><td>两页均无 <strong>meta description</strong></td><td>搜索结果摘要缺失，CTR 受损</td><td>全部</td></tr>
+      <tr><td><strong>keywords 超长堆砌</strong>（400+ 字符）</td><td>现代搜索引擎忽略甚至降权；属黑帽残留</td><td>index.html</td></tr>
+      <tr><td>无 <strong>lang 属性</strong>、无 Open Graph / Twitter Card</td><td>社交分享无预览卡片；语言识别歧义（繁中/英文混杂）</td><td>全部</td></tr>
+      <tr><td>download.html 无 h1、无 favicon</td><td>下载页标题层级缺失，标签页无图标</td><td>download.html</td></tr>
+      <tr><td>图片无 alt（crossfire.png 等被注释掉）</td><td>图片 SEO 失效</td><td>download.html</td></tr>
+      <tr><td>title 关键词堆砌（「VIP Hack Cheat」三连）</td><td>标题过长被截断，广告词风险</td><td>index.html</td></tr>
+    </table>
+    <p>域名自身带 <code>Hack/Cheat/VIP</code> 高广告词属性，搜索收录与广告投放天然受限——这属于业务本质约束，只能通过内容建设部分对冲。</p>
+  </section>
+
+  <!-- ============ 5 性能 ============ -->
+  <section>
+    <h2><span class="no">5</span>性能与用户体验 <span class="badge b-warn">评分 4.0 / 10</span></h2>
+    <h3>5.1 首页首屏加载清单（桌面端）</h3>
+    <table>
+      <tr><th>资源</th><th class="num">大小</th><th>评价</th></tr>
+      <tr><td>static/style.css + main.css</td><td class="num">155KB</td><td>可压缩至 ~30KB</td></tr>
+      <tr><td>static/footer.js（jQuery 3.x 未压缩）</td><td class="num">296KB</td><td><span class="badge b-bad">用压缩版可省 ~210KB</span></td></tr>
+      <tr><td>static/music.mp3</td><td class="num">3.2MB</td><td><span class="badge b-bad">autoplay 且非静音，多数浏览器直接拦截；纯浪费</span></td></tr>
+      <tr><td>YouTube iframe</td><td class="num">—</td><td>国内访问白屏占位；海外正常</td></tr>
+      <tr><td>SVG 图标 ×6（内联）</td><td class="num">~15KB</td><td>结构损坏的 SVG 需重做</td></tr>
+    </table>
+    <h3>5.2 体验问题清单</h3>
+    <ul>
+      <li><strong>自动播放背景音乐</strong>：Chrome/Safari 会拦截带声音的 autoplay，页面等于「多下 3.2MB 没响」；若被放行则骚扰用户，是典型的负体验。</li>
+      <li><strong>YouTube 嵌入</strong>：目标用户含大陆玩家，但 iframe 打不开，形成空白区块。</li>
+      <li><strong>30MB+ ZIP 直链下载</strong>：无速度提示、无镜像；GitHub Pages 下载走 CDN 尚可，但高峰期不稳定。</li>
+      <li><strong>无缓存/懒加载策略</strong>：GitHub Pages 默认强缓存静态资源尚可，但音乐、大图均无条件加载。</li>
+      <li><strong>移动端</strong>：viewport 已声明，但首页按钮、卡片按桌面设计，未做断点适配。</li>
+    </ul>
+  </section>
+
+  <!-- ============ 6 安全合规 ============ -->
+  <section>
+    <h2><span class="no">6</span>安全与合规风险 <span class="badge b-ok">评分 7.0 / 10</span></h2>
+    <h3>6.1 安全面（相对干净）</h3>
+    <ul>
+      <li>纯静态、无表单、无 Cookie、无后端 → <strong>无注入/越权面</strong>，这是最大的安全优势。</li>
+      <li>下载文件使用随机文件名（5C72CA.zip、7A638484.zip），降低直链扫描攻击面。<span class="badge b-ok">好习惯</span></li>
+      <li>无外部 CDN 脚本（全部本地文件）→ 无供应链注入面。</li>
+    </ul>
+    <h3>6.2 可改进点</h3>
+    <ul>
+      <li>缺少 <strong>CSP / Referrer-Policy / X-Content-Type-Options</strong> 等安全响应头（GitHub Pages 可通过 <code>_headers</code> 文件配置）。</li>
+      <li>页面明示版本号（VN-211103-2、WE-260812、PH-260806），暴露更新节奏；辅助类产品建议弱化。</li>
+      <li>footer.js 与 jquery.min.js 版本过旧（2013/2014），存在已知漏洞（XSS 向量），建议统一升级。</li>
+    </ul>
+    <h3>6.3 业务合规（客观提示，不构成法律意见）</h3>
+    <div class="summary-callout">
+      <p><strong>核心事实</strong>：本站销售 CF 第三方辅助（外挂），TOS 已声明「可随时封禁授权、对封号不负责」，页脚声明 <em>Except China</em>（不服务中国区），界面以繁中/英文面向海外服玩家。</p>
+      <p><strong>风险点</strong>：① 辅助类业务在多数司法辖区违反游戏用户协议，游戏厂商（Smilegate/Tencent）有权维权并请求平台下架；② 国内对「提供侵入/非法控制计算机信息系统程序工具」有明确刑事规制——尽管站方声明不服务中国区，但 <strong>支付渠道 mall.909net.cn 是.cn 备案域名，属于境内基础设施</strong>，与「Except China」声明存在矛盾，一旦被认定服务境内用户，风险等级显著上升；③ GitHub Pages 对违反平台政策的内容可随时封禁仓库，域名/支付/代码托管都应准备独立备份与应急切换方案。</p>
+    </div>
+  </section>
+
+  <!-- ============ 7 运营内容 ============ -->
+  <section>
+    <h2><span class="no">7</span>运营与内容状态</h2>
+    <table>
+      <tr><th>项</th><th>状态</th><th>说明</th></tr>
+      <tr><td>版本更新频率</td><td><span class="badge b-ok">活跃</span></td><td>WE-260812（2026-08-12）、PH-260806（2026-08-06），约每 1-2 周更新</td></tr>
+      <tr><td>VN 版本</td><td><span class="badge b-bad">停更且死链</span></td><td>版本号 211103-2（2021-11），页面仍展示、链接已失效</td></tr>
+      <tr><td>页脚文案</td><td><span class="badge b-warn">拼写错误</span></td><td>「since 2099」应为 2019/2020 之类；「Except China」直白写进页脚，对华语用户观感差</td></tr>
+      <tr><td>文案规范</td><td><span class="badge b-warn">混排</span></td><td>download.html 标题「Dwonload」拼错；繁中/英文/越南语混杂（越南卡文案为越南语）</td></tr>
+      <tr><td>社群</td><td><span class="badge b-ok">正常</span></td><td>Discord + Telegram 双群入口，下载页缺社群入口（只有首页有）</td></tr>
+    </table>
+  </section>
+
+  <!-- ============ 8 优化路线图 ============ -->
+  <section>
+    <h2><span class="no">8</span>优化路线图（按优先级）</h2>
+
+    <div class="prio p0"><div class="tag">P0</div><div><h4>立即修复 —— 止血项（1 天内）</h4>
+      <p>① 下架或补链 download.html 的 VN 死链；② 添加 .gitignore（webw.zip 等，防止误 push 触发 100MB 限制）；③ 移除/改为静音按钮触发的 music.mp3 autoplay；④ 提交信息改为规范格式。</p>
+    </div></div>
+
+    <div class="prio p1"><div class="tag">P1</div><div><h4>近期整改 —— 体验与 SEO（1 周内）</h4>
+      <p>① 落地首页 Liquid Glass 改版（顺带修复全部 HTML 结构错乱，两页统一视觉）；② 补 meta description / lang / OG / favicon / 图片 alt；③ 清理死文件（yii.js、APlayer、Meting、jquery-1.9.1、base.css、popup.css、根 core.css）并统一 jQuery 至压缩版 3.x；④ 删除 speed/ 目录 3 个相同 ZIP；⑤ 归档 9 个未引用历史 ZIP 至本地备份并移出仓库。</p>
+    </div></div>
+
+    <div class="prio p2"><div class="tag">P2</div><div><h4>架构升级 —— 长期（1 个月内）</h4>
+      <p>① 下载页数据化：版本号/状态/链接集中到单一 JSON 或脚本生成，杜绝再次出现「页面上写 211103、目录里没有文件」；② 增加 _headers（CSP/Referrer-Policy 等安全头）；③ 版本号弱化显示；④ 业务容灾：备用域名 + 备用托管（Cloudflare Pages/对象存储） + 支付渠道备份，防单点封禁；⑤ 规范 git 分支/提交流程；⑥ 校验并补齐 core.css 缺失的 uk-scrollspy/uk-toggle/uk-scroll 样式。</p>
+    </div></div>
+
+    <h3>8.1 首页改版要点建议（与 Liquid Glass 方向衔接）</h3>
+    <ul>
+      <li>保留现有业务元素：店铺入口、Download/Purchase 双按钮、社群入口、功能四卡片（Hax/Cheat、ESP·Aimbot·Memory、ZM/PVE、Special）、TOS 条款。</li>
+      <li>YouTube 嵌入建议替换为静态封面图 + 点击跳转（避免国内白屏）。</li>
+      <li>「Except China」等风险文案建议从页脚移入 TOS 详情，避免首屏负面观感。</li>
+      <li>版本/更新信息移到下载页统一展示，首页保持品牌调性。</li>
+    </ul>
+  </section>
+
+  <!-- ============ 附 ============ -->
+  <section>
+    <h2><span class="no">9</span>关键发现 TOP 10</h2>
+    <table>
+      <tr><th class="num">#</th><th>发现</th><th>严重度</th></tr>
+      <tr><td class="num">1</td><td>首页 HTML 结构损坏（body 提前闭合、SVG defs 截断）</td><td><span class="badge b-bad">高</span></td></tr>
+      <tr><td class="num">2</td><td>VN 下载链接死链且目录缺失，版本停更 4 年仍展示</td><td><span class="badge b-bad">高</span></td></tr>
+      <tr><td class="num">3</td><td>Liquid Glass 改版版未保存：git 历史与磁盘均只有 22.6KB 旧版，14KB 新版仅存在于记忆日志，需找回或重做</td><td><span class="badge b-bad">高</span></td></tr>
+      <tr><td class="num">4</td><td>3 份 jQuery（1.9.1 / 1.11.1 / 3.x 未压缩）并存，含 296KB 命名误导文件</td><td><span class="badge b-warn">中</span></td></tr>
+      <tr><td class="num">5</td><td>自动播放 3.2MB 背景音乐，多数浏览器拦截且体验负向</td><td><span class="badge b-warn">中</span></td></tr>
+      <tr><td class="num">6</td><td>约 300MB 未引用 ZIP + 3 个同字节 ZIP 冗余，仓库膨胀</td><td><span class="badge b-warn">中</span></td></tr>
+      <tr><td class="num">7</td><td>无 meta description / OG / lang，keywords 黑帽堆砌</td><td><span class="badge b-warn">中</span></td></tr>
+      <tr><td class="num">8</td><td>无 .gitignore，400MB 备份包存在误提交风险</td><td><span class="badge b-warn">中</span></td></tr>
+      <tr><td class="num">9</td><td>支付渠道为境内 .cn 域名，与「Except China」声明矛盾，业务合规存在结构性风险</td><td><span class="badge b-warn">中</span></td></tr>
+      <tr><td class="num">10</td><td>页脚「since 2099」拼写错误 + 下载页「Dwonload」拼写错误</td><td><span class="badge b-info">低</span></td></tr>
+    </table>
+  </section>
+
+  <div class="footer-note">PaoMian Hax 官网深度分析报告 · 生成于 2026-08-25 · 分析对象为 D:\Github\webw 工作区实际文件（含 git 历史与资源完整性实测）</div>
+</div>
+</body>
+</html>

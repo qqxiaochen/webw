@@ -1,0 +1,33 @@
+# Archives & large binary files
+*.zip
+*.rar
+*.7z
+*.tar.gz
+*.7z
+
+# Node/npm
+node_modules/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# WorkBuddy
+.workbuddy/backups/
+.workbuddy/memory/*.bak*
+
+# Downgrade - don't commit local backup copies
+webw.zip
+webw-*.zip

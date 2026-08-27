@@ -1,0 +1,269 @@
+﻿
+
+<html lang="en"><head><meta charset="UTF-8"><title>Page Not Found · 泡面 404</title> <link rel="shortcut icon" href="/favicon.ico"><meta http-equiv="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><meta name="renderer" content="webkit"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=0"><meta name="apple-mobile-web-app-capable" content="yes"><style type="text/css">
+/* =========================================================
+   PaoMian 404 — Apple Liquid Glass (visionOS-style) · v2 优化
+   设计令牌 (Design Tokens)
+   ========================================================= */
+:root{
+  /* 玻璃色调：低透明度白 + 极淡蓝紫，避免高饱和 */
+  --glass-tint:        rgba(255,255,255,.14);
+  --glass-tint-soft:   rgba(255,255,255,.08);
+  --glass-tint-strong: rgba(255,255,255,.24);
+  --glass-border:      rgba(255,255,255,.55);   /* 受光描边 */
+  --glass-border-soft: rgba(255,255,255,.26);
+  --glass-highlight:   rgba(255,255,255,.70);   /* 内高光 */
+  --glass-rim:         rgba(255,255,255,.16);   /* 外白描边(玻璃边缘) */
+  --glass-edge-dark:   rgba(28,32,64,.10);      /* 底部内暗边(厚度) */
+  --ink:        #4a5168;                          /* 柔和 slate 控件色 */
+  --ink-soft:   rgba(74,81,104,.55);
+  --accent-blue: #3a4c8a;
+  --accent-pink: #e0798f;                         /* 低饱和关闭键 */
+
+  /* 模糊与折射 */
+  --blur-strong: 40px;
+  --blur-soft:   22px;
+
+  /* Apple 大圆角 */
+  --radius-window: 30px;
+  --radius-panel:  20px;
+  --radius-pill:   13px;
+
+  /* 漂浮投影 */
+  --shadow-float:      0 24px 70px rgba(31,38,79,.22);
+  --shadow-float-hover:0 38px 100px rgba(31,38,79,.30);
+
+  --spring: cubic-bezier(.22,1,.36,1);
+}
+
+/* ===================== 基础 ===================== */
+*{margin:0;padding:0;box-sizing:border-box}
+a{color:inherit;text-decoration:none;background-color:transparent}
+li{list-style:none}
+.clearfix:after{content:'';display:table;clear:both}
+
+body{
+  font-size:14px;color:var(--ink);
+  min-height:100vh;overflow:hidden;
+  /* Apple 柔光渐变底 —— 背景颜色会透过玻璃染色（含第4层粉/青，色彩更斑斓）*/
+  background:
+    radial-gradient(120% 120% at 12% 6%,  #eaf1ff 0%, rgba(234,241,255,0) 55%),
+    radial-gradient(120% 120% at 88% 20%, #f6e6ff 0%, rgba(246,230,255,0) 55%),
+    radial-gradient(130% 130% at 30% 92%, #ffe9f4 0%, rgba(255,233,244,0) 58%),
+    radial-gradient(140% 140% at 72% 78%, #e2f7ff 0%, rgba(226,247,255,0) 60%),
+    linear-gradient(160deg, #eef3fb 0%, #f6f1fb 48%, #eef6fb 100%);
+}
+
+/* ===================== 全屏容器 ===================== */
+.wrap{position:relative;min-height:100vh;width:100%;overflow:hidden}
+
+/* 缓动环境光晕（ambient light），让玻璃背后有流动色彩 */
+.wrap::before,.wrap::after{
+  content:'';position:absolute;border-radius:50%;
+  filter:blur(60px);z-index:0;opacity:.7;pointer-events:none;
+}
+.wrap::before{
+  width:46vw;height:46vw;left:-8vw;top:-10vw;
+  background:radial-gradient(circle, rgba(108,142,247,.55), rgba(108,142,247,0) 70%);
+  animation:drift1 18s var(--spring) infinite alternate;
+}
+.wrap::after{
+  width:50vw;height:50vw;right:-12vw;bottom:-14vw;
+  background:radial-gradient(circle, rgba(214,150,255,.52), rgba(214,150,255,0) 70%);
+  animation:drift2 22s var(--spring) infinite alternate;
+}
+
+/* 背景 SVG：保留为环境反射源，软化成液态光 */
+.wrap-bg{
+  position:absolute;inset:0;z-index:0;
+  filter:blur(26px) saturate(150%);
+  opacity:.85;
+}
+.wrap-bg circle,.wrap-bg rect{stroke-width:0;-ms-transform:rotate(30deg) scale(1.1);transform:rotate(30deg) scale(1.1);-ms-transform-origin:center;transform-origin:center}
+
+/* ===================== 浮动玻璃窗 .main ===================== */
+.main{
+  position:absolute;top:50%;left:50%;z-index:2;
+  width:970px;max-width:calc(100vw - 28px);
+  border:1px solid transparent;
+  /* 折射受光描边：内玻璃渐变 + 外缘高光渐变 */
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.32), rgba(255,255,255,.10)) padding-box,
+    linear-gradient(155deg, var(--glass-border), rgba(255,255,255,0) 38%) border-box;
+  -webkit-backdrop-filter:blur(var(--blur-strong)) saturate(200%);
+  backdrop-filter:blur(var(--blur-strong)) saturate(200%);
+  /* 玻璃厚度：外白描边 + 顶部高光 + 底部内暗边 */
+  box-shadow:
+    var(--shadow-float),
+    0 0 0 1px var(--glass-rim),
+    inset 0 1px 0 var(--glass-highlight),
+    inset 0 -1px 0 var(--glass-edge-dark),
+    inset 0 0 40px rgba(255,255,255,.08);
+  border-radius:var(--radius-window);
+  overflow:hidden;
+  -ms-transform:translate(-50%,-50%);transform:translate(-50%,-50%);
+  transition:transform .55s var(--spring), box-shadow .55s var(--spring);
+  animation:floaty 9s ease-in-out infinite;
+}
+/* 顶部静态受光高光 */
+.main::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:34%;
+  background:linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,0));
+  pointer-events:none;
+}
+/* 光泽扫过 (shine sweep) —— 用 mask-image 羽化，光带更柔更高级 */
+.main::after{
+  content:'';position:absolute;top:0;left:-60%;width:55%;height:100%;
+  background:linear-gradient(105deg, rgba(255,255,255,0), rgba(255,255,255,.55) 50%, rgba(255,255,255,0));
+  transform:skewX(-18deg);pointer-events:none;
+  mix-blend-mode:screen;
+  -webkit-mask-image:linear-gradient(90deg, transparent, #000 42%, #000 58%, transparent);
+  mask-image:linear-gradient(90deg, transparent, #000 42%, #000 58%, transparent);
+  animation:shine 7s ease-in-out infinite;
+}
+.main:hover{
+  -ms-transform:translate(-50%,calc(-50% - 16px)) scale(1.012);
+  transform:translate(-50%,calc(-50% - 16px)) scale(1.012);
+  box-shadow:
+    var(--shadow-float-hover),
+    0 0 0 1px rgba(255,255,255,.22),
+    inset 0 1px 0 var(--glass-highlight),
+    inset 0 -1px 0 var(--glass-edge-dark),
+    inset 0 0 40px rgba(255,255,255,.14);
+}
+
+/* ===================== 顶部标签栏 .header-tabs ===================== */
+.header-tabs{
+  width:100%;height:55px;padding:0 22px;
+  display:flex;align-items:center;
+  background:linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.06));
+  border-bottom:1px solid rgba(255,255,255,.18);
+  border-radius:var(--radius-window) var(--radius-window) 0 0;
+  -webkit-backdrop-filter:blur(var(--blur-soft));backdrop-filter:blur(var(--blur-soft));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(20,24,64,.06);
+  position:relative;
+}
+.header-tabs .tab{
+  position:relative;height:38px;min-width:170px;
+  padding:0 18px;margin-right:8px;
+  display:flex;align-items:center;
+  border-radius:var(--radius-pill) var(--radius-pill) 0 0;
+  background:rgba(255,255,255,.32);
+  border:1px solid rgba(255,255,255,.35);border-bottom:none;
+  color:var(--ink);line-height:38px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+  transition:background .3s var(--spring), transform .3s var(--spring);
+}
+.header-tabs .tab span{float:left}
+.header-tabs .tab i{
+  position:relative;float:right;width:11px;height:11px;margin:13px 0 0 14px;
+  cursor:pointer;transform:rotate(45deg);
+}
+.header-tabs .tab i:before{content:'';position:absolute;top:5px;left:0;width:100%;height:1.5px;background:var(--ink-soft);border-radius:2px}
+.header-tabs .tab i:after{content:'';position:absolute;left:5px;top:0;width:1.5px;height:100%;background:var(--ink-soft);border-radius:2px}
+.header-tabs .tab:hover{background:rgba(255,255,255,.48);transform:translateY(-1px)}
+
+.header-tabs .tab-add{
+  position:relative;width:26px;height:26px;margin-left:6px;flex:none;
+  border-radius:50%;
+  background:rgba(255,255,255,.30);
+  border:1px solid rgba(255,255,255,.4);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+  transition:background .3s var(--spring), transform .3s var(--spring);
+}
+.header-tabs .tab-add:before{content:'';position:absolute;top:12px;left:8px;width:10px;height:2px;background:var(--ink);border-radius:2px}
+.header-tabs .tab-add:after{content:'';position:absolute;left:12px;top:8px;width:2px;height:10px;background:var(--ink);border-radius:2px}
+.header-tabs .tab-add:hover{background:rgba(255,255,255,.48);transform:rotate(90deg)}
+
+.header-tabs .tabs-tool{margin-left:auto;display:flex;align-items:center;height:100%}
+.header-tabs .tabs-tool a{position:relative;width:14px;height:14px;margin:0 12px;cursor:pointer}
+.header-tabs .tabs-tool .btn-min:before{content:'';position:absolute;top:6px;left:0;width:100%;height:1.5px;background:var(--ink);border-radius:2px}
+.header-tabs .tabs-tool .btn-max:before{content:'';position:absolute;top:0;left:0;width:14px;height:14px;border:1.5px solid var(--ink);border-radius:3px;box-sizing:border-box}
+.header-tabs .tabs-tool .btn-close{transform:rotate(45deg)}
+.header-tabs .tabs-tool .btn-close:before{content:'';position:absolute;top:6px;left:0;width:14px;height:1.5px;background:var(--accent-pink);border-radius:2px}
+.header-tabs .tabs-tool .btn-close:after{content:'';position:absolute;left:6px;top:0;width:1.5px;height:14px;background:var(--accent-pink);border-radius:2px}
+.header-tabs .tabs-tool a:hover{opacity:.7}
+
+/* ===================== 地址栏 .header-url ===================== */
+.header-url{
+  width:100%;height:54px;padding:9px 16px;
+  display:flex;align-items:center;
+  background:rgba(255,255,255,.18);
+  border-bottom:1px solid rgba(255,255,255,.14);
+  -webkit-backdrop-filter:blur(var(--blur-soft));backdrop-filter:blur(var(--blur-soft));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -1px 0 rgba(20,24,64,.05);
+}
+.header-url a{
+  position:relative;height:34px;width:34px;margin:0 5px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;
+  background:rgba(255,255,255,.24);
+  border:1px solid rgba(255,255,255,.35);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+  transition:transform .3s var(--spring), background .3s var(--spring), box-shadow .3s var(--spring);
+}
+.header-url a svg{margin:0}
+.header-url a .arrow{fill:none;stroke:var(--ink);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round}
+.header-url .btn-next .arrow{transform:rotate(180deg);stroke:var(--ink-soft)}
+.header-url .btn-refresh path{fill:none;stroke:var(--ink);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;transform-origin:center;transform:rotate(40deg)}
+.header-url .btn-refresh polyline{fill:var(--ink);transform-origin:center;transform:rotate(40deg)}
+.header-url a:hover{
+  background:rgba(255,255,255,.52);
+  transform:translateY(-2px);
+  box-shadow:0 6px 16px rgba(31,38,79,.18), inset 0 1px 0 rgba(255,255,255,.7);
+}
+.header-url a:active{transform:translateY(0) scale(.96)}
+.header-url input[type=text]{
+  height:34px;flex:1;margin-left:10px;padding:0 16px;
+  border:1px solid rgba(255,255,255,.35);border-radius:18px;
+  background:rgba(255,255,255,.22);color:var(--ink);font-size:13px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+}
+.header-url input[type=text]:focus{outline:none;border-color:rgba(255,255,255,.6);background:rgba(255,255,255,.34)}
+
+/* ===================== 内容区 .main-content ===================== */
+.main-content{
+  height:470px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:0 0 var(--radius-window) var(--radius-window);
+  -webkit-backdrop-filter:blur(var(--blur-soft));backdrop-filter:blur(var(--blur-soft));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4), inset 0 -1px 0 rgba(20,24,64,.05);
+}
+.main-content h5{padding:0;font-weight:500;text-align:center}
+.main-content h5 span{position:relative;display:inline-block;font-size:56px;color:var(--accent-blue);letter-spacing:.5px}
+/* 装饰光球 (orb) —— 取代原纯色圆点，发光更液态 */
+.main-content h5 span:before{content:'';position:absolute;top:44px;left:-40px;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,#c9b8ff,#7d8ff0);opacity:.55;box-shadow:0 0 18px rgba(125,143,240,.6)}
+.main-content h5 span:after{content:'';position:absolute;top:30px;left:-86px;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,#bfe6ff,#7db8f0);opacity:.55;box-shadow:0 0 22px rgba(125,184,240,.6)}
+.main-content h5 span i:before{content:'';position:absolute;top:30px;right:-78px;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,#ffc9e6,#e08fb8);opacity:.55;box-shadow:0 0 18px rgba(224,143,184,.6)}
+.main-content h5 span i:after{content:'';position:absolute;top:46px;right:-44px;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,#cfe0ff,#8fb0f0);opacity:.55;box-shadow:0 0 22px rgba(143,176,240,.6)}
+.main-content p{margin-top:22px;font-size:22px;text-align:center;color:var(--ink-soft)}
+
+/* 双语副文案 —— 中文优先(主)，英文为辅(柔和、更小) */
+.main-content h5 .sub-en,
+.main-content p .sub-en{display:block;font-weight:500;color:var(--ink-soft);letter-spacing:.4px;line-height:1.5}
+.main-content h5 .sub-en{margin-top:16px;font-size:18px;letter-spacing:1.5px}
+.main-content p .sub-en{margin-top:10px;font-size:14px;opacity:.85}
+.header-tabs .tab .en{font-size:11px;margin-left:6px;color:var(--ink-soft);opacity:.7;letter-spacing:.3px;font-weight:400}
+
+/* ===================== 关键帧 ===================== */
+@keyframes drift1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(6vw,4vw) scale(1.15)}}
+@keyframes drift2{0%{transform:translate(0,0) scale(1.05)}100%{transform:translate(-5vw,-3vw) scale(1.2)}}
+@keyframes floaty{0%,100%{top:50%}50%{top:48.5%}}
+@keyframes shine{0%{left:-60%}45%,100%{left:130%}}
+
+/* ===================== 移动端微调 ===================== */
+@media (max-width:680px){
+  .header-tabs{padding:0 14px}
+  .header-tabs .tab{min-width:118px;font-size:13px}
+  .main-content h5 span{font-size:40px}
+  .main-content p{font-size:18px}
+  .main-content h5 .sub-en{font-size:14px;margin-top:12px}
+  .main-content p .sub-en{font-size:12px;margin-top:8px}
+  .header-tabs .tab .en{font-size:10px}
+}
+
+</style></head><body><div class="wrap"><svg class="wrap-bg" width="98vw" height="99vh" viewBox="0 0 400 400"><defs><linearGradient id="gradient1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="20%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="40%" stop-color="#c4efff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#e7c4ff" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#c4d6ff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#a3bbff" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#73dcfe" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient4" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#fec0dd" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#a3bbff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient5" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#c4d6ff" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#e7c4ff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient6" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="40%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#c4efff" stop-opacity="0.2"></stop><stop offset="90%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><radialGradient id="gradient7" fx="50%" fy="50%" r="65%" spreadMethod="pad"><stop offset="0%" stop-color="#eefafe" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></radialGradient></defs><rect x="50" y="0" width="50" height="400" style="fill:url(#gradient1)"></rect><rect x="100" y="0" width="50" height="400" style="fill:url(#gradient2)"></rect><rect x="150" y="0" width="50" height="400" style="fill:url(#gradient3)"></rect><rect x="200" y="0" width="50" height="400" style="fill:url(#gradient4)"></rect><rect x="250" y="0" width="50" height="400" style="fill:url(#gradient5)"></rect><rect x="300" y="0" width="50" height="400" style="fill:url(#gradient6)"></rect><circle cx="200" cy="200" r="300" style="fill:url(#gradient7)"></circle></svg><div class="main"><header><div class="header-tabs clearfix"><a href="javascript: void(0);" class="tab"><span>New Tab<span class="en">新建标签页</span></span> <i></i> </a><a href="javascript: void(0);" class="tab-add"></a><div class="tabs-tool"><a href="javascript: void(0);" class="btn-min"></a> <a href="javascript: void(0);" class="btn-max"></a> <a href="javascript: void(0);" class="btn-close"></a></div></div><div class="header-url clearfix"><svg style="display:none"><defs><g id="arrow"><path d="M8,2 L1,8 8,14"></path><path d="M2,8 L15,8"></path></g></defs></svg> <a href="javascript: void(0);" class="btn-back"><svg width="16" height="16"><use class="arrow" xlink:href="#arrow"></use></svg> </a><a href="javascript: void(0);" class="btn-next"><svg width="16" height="16"><use class="arrow" xlink:href="#arrow"></use></svg> </a><a href="javascript: void(0);" class="btn-refresh"><svg width="16" height="16"><path class="refresh-arc" d="M15,8  A7,7 0 1,1 8,1"></path><polyline points="8,-3  11,1  8,5"></polyline></svg> </a><input type="text" readonly="readonly" class="url-value"></div></header><div class="main-content"><h5><span>Page Not Found<i></i></span><span class="sub-en">网页找不到惹 ╥﹏╥...</span></h5><p>You'll be redirected to www.paomfz.com shortly<span class="sub-en">稍后将自动跳转到 www.paomfz.com</span></p></div></div></div><script type="text/javascript">window.onload=function(){document.getElementsByClassName("url-value")[0].value=location.href;setTimeout(function(){location.href='https://www.paomfz.com'},5000)}</script>
+</body></html>

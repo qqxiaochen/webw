@@ -1,9 +1,4 @@
 # Archives & large binary files
-*.zip
-*.rar
-*.7z
-*.tar.gz
-*.7z
 
 # Node/npm
 node_modules/

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaoMian Hax · 项目深度分析报告 v2 · 2026-08-27</title>
+<style>
+  :root{
+    --bg:#0b0d14; --card:#141826; --border:#232838;
+    --text:#e4e6ee; --text2:#9aa0b4; --text3:#5d6478;
+    --accent:#4f7cff; --green:#34c759; --amber:#ff9f0a; --red:#ff5f57;
+    --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:40px 20px;max-width:1080px;margin:0 auto}
+  h1{font-size:2.1rem;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+  h2{font-size:1.4rem;font-weight:600;margin:44px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+  h3{font-size:1.08rem;font-weight:600;margin:24px 0 10px;color:var(--accent)}
+  h4{font-size:.95rem;font-weight:600;margin:16px 0 8px;color:var(--text)}
+  .subtitle{color:var(--text2);font-size:.95rem;margin-bottom:24px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+  .stat{text-align:center;padding:16px 8px}
+  .stat .num{font-size:1.9rem;font-weight:700;color:var(--accent)}
+  .stat .label{font-size:.78rem;color:var(--text2);margin-top:4px}
+  .tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.75rem;font-weight:600;margin-right:6px}
+  .tag-green{background:rgba(52,199,89,.15);color:var(--green)}
+  .tag-amber{background:rgba(255,159,10,.15);color:var(--amber)}
+  .tag-red{background:rgba(255,95,87,.15);color:var(--red)}
+  .tag-blue{background:rgba(79,124,255,.15);color:var(--accent)}
+  table{width:100%;border-collapse:collapse;font-size:.87rem;margin:12px 0}
+  th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--text2);font-weight:600;font-size:.76rem;text-transform:uppercase;letter-spacing:.5px}
+  td.num{font-variant-numeric:tabular-nums;text-align:right}
+  ul,ol{padding-left:22px;margin:8px 0}
+  li{margin:5px 0}
+  code{background:rgba(255,255,255,.06);padding:2px 7px;border-radius:5px;font-size:.84rem;color:var(--accent)}
+  .good{color:var(--green)} .warn{color:var(--amber)} .bad{color:var(--red)}
+  .p0{border-left:3px solid var(--red);padding:6px 14px;margin:10px 0}
+  .p1{border-left:3px solid var(--amber);padding:6px 14px;margin:10px 0}
+  .p2{border-left:3px solid var(--accent);padding:6px 14px;margin:10px 0}
+  .finding{padding:10px 0;border-bottom:1px dashed var(--border)}
+  .finding:last-child{border-bottom:none}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 30px}
+  .toc a{color:var(--accent);text-decoration:none;font-size:.88rem}
+  .banner{border:1px solid var(--amber);background:rgba(255,159,10,.07);border-radius:12px;padding:16px 20px;margin:18px 0}
+  .banner-red{border:1px solid var(--red);background:rgba(255,95,87,.07);border-radius:12px;padding:16px 20px;margin:18px 0}
+  .diff{background:rgba(255,255,255,.03);border:1px dashed var(--border);border-radius:8px;padding:12px 16px;margin:10px 0;font-size:.9rem}
+  .ok{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px}
+  .ok.g{background:var(--green)} .ok.a{background:var(--amber)} .ok.r{background:var(--red)}
+  .footer-note{color:var(--text3);font-size:.8rem;text-align:center;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<h1>PaoMian Hax · 项目深度分析报告（v2）</h1>
+<p class="subtitle">报告日期：2026-08-27 02:40 · 分析方式：本地全量文件审计 + 线上站点实测（curl / DNS / API）· 分析人：WorkBuddy<br>
+v1 报告（02:16）存在数处与现状不符之处，本版已逐条核验修正，并新增部署架构与线上健康度实测。</p>
+
+<div class="toc">
+  <a href="#overview">1. 项目概况</a> ·
+  <a href="#arch">2. 部署架构真相</a> ·
+  <a href="#structure">3. 文件结构</a> ·
+  <a href="#code">4. 代码质量</a> ·
+  <a href="#resources">5. 资源与仓库膨胀</a> ·
+  <a href="#git">6. Git 状态</a> ·
+  <a href="#live">7. 线上健康度实测</a> ·
+  <a href="#seo">8. SEO / 可访问性</a> ·
+  <a href="#perf">9. 性能</a> ·
+  <a href="#ux">10. UX</a> ·
+  <a href="#risk">11. 风险</a> ·
+  <a href="#roadmap">12. 路线图</a>
+</div>
+
+<!-- 1. 项目概况 -->
+<section class="card" id="overview">
+<h2>1. 项目概况</h2>
+<div class="grid3">
+  <div class="stat"><div class="num">3</div><div class="label">HTML 页面</div></div>
+  <div class="stat"><div class="num">~66KB</div><div class="label">前端源码</div></div>
+  <div class="stat"><div class="num">~134MB</div><div class="label">工作区分发 ZIP</div></div>
+  <div class="stat"><div class="num">~1.4GB</div><div class="label">Git 仓库体积</div></div>
+  <div class="stat"><div class="num">71</div><div class="label">Git 提交</div></div>
+  <div class="stat"><div class="num">1</div><div class="label">实际后端依赖</div></div>
+</div>
+<p><strong>项目名称：</strong>PaoMian Hax（泡面辅助）— CrossFire 穿越火线第三方游戏辅助工具分发站</p>
+<p><strong>域名：</strong><code>www.paomfz.com</code> · <strong>GitHub 仓库：</strong><code>qqxiaochen/webw</code>（public，1.4GB，HTML 语言，最近 push 2026-08-26）</p>
+<p><strong>技术栈：</strong>纯静态 HTML + 内联 CSS + 内联 JS，无框架、无构建工具、无数据库</p>
+<p><strong>设计风格：</strong>macOS Liquid Glass / visionOS（毛玻璃 + 环境光斑 + 渐变受光描边），index / download 两页统一</p>
+
+<h3>文件清单</h3>
+<table>
+  <tr><th>文件</th><th>大小</th><th>设计版本</th><th>状态</th></tr>
+  <tr><td><code>index.html</code></td><td class="num">36,520 B</td><td>Liquid Glass v3</td><td><span class="tag tag-green">可读非混淆</span></td></tr>
+  <tr><td><code>download.html</code></td><td class="num">29,392 B</td><td>Liquid Glass v3</td><td><span class="tag tag-green">可读非混淆 · 有未提交修改</span></td></tr>
+  <tr><td><code>404.html</code></td><td class="num">9,574 B</td><td><b class="bad">仍为 2022 旧版</b></td><td><span class="tag tag-red">与主站割裂 · 线上未生效</span></td></tr>
+</table>
+</section>
+
+<!-- 2. 部署架构真相 -->
+<section class="card" id="arch">
+<h2>2. 部署架构真相（v2 新增）</h2>
+<div class="banner-red">
+<strong>⚠ 关键事实修正：</strong>工作记忆与 v1 报告均记录「GitHub Pages 托管，CNAME 绑定」。经实测<b>与现状不符</b>：线上站点托管在 <b>Cloudflare</b>，GitHub 仓库并非部署通道。
+</div>
+<table>
+  <tr><th>探测项</th><th>实测结果</th><th>结论</th></tr>
+  <tr><td>DNS</td><td><code>www.paomfz.com → 172.66.40.151</code>（Cloudflare 边缘 IP）</td><td><span class="tag tag-blue">Cloudflare 代理</span></td></tr>
+  <tr><td>响应头</td><td><code>Server: cloudflare</code>，<code>cf-cache-status: DYNAMIC</code>，<code>CF-RAY ...-BOM</code></td><td><span class="tag tag-blue">Cloudflare 边缘</span></td></tr>
+  <tr><td><code>GET /robots.txt</code></td><td>返回 Cloudflare 默认 AI 内容信号文件（非用户自建）</td><td><span class="tag tag-blue">CF 默认行为</span></td></tr>
+  <tr><td><code>GET /nonexistent</code></td><td>返回默认「404 Not Found」，<b>自定义 404.html 未生效</b></td><td><span class="tag tag-red">非 GH Pages（GH Pages 会加载自定义 404）</span></td></tr>
+  <tr><td>GitHub API <code>/pages</code></td><td>HTTP 404 = 该仓库<b>未启用</b> GitHub Pages</td><td><span class="tag tag-red">与记录矛盾</span></td></tr>
+  <tr><td>线上 download.html 哈希</td><td><code>a93c1dc…</code> ≠ 本地 <code>536f7d4b…</code>，但链接已是最新版</td><td><span class="tag tag-amber">线上为另一份构建（疑混淆后发布）</span></td></tr>
+  <tr><td>线上 <code>down/ph/9D759C3.zip</code></td><td>206 可下载；本地该文件被 <code>.gitignore</code> 忽略、从未提交</td><td><span class="tag tag-amber">发布不走 git push</span></td></tr>
+</table>
+
+<h3>部署模型推断</h3>
+<div class="p1"><strong>P1 — 发布链路不清，存在「部署 = 手工上传 / Cloudflare Pages 直传」的痕迹。</strong>
+git 仓库（origin/main）落后于线上：线上已引用 <code>9D759C3.zip</code>（本地未提交）、线上文件哈希与本地不同、线上 robots/404 均为 CF 默认。<br>
+含义：① git 只作源码留档，不是发布源；② 若服务器/账号丢失，无法从 git 完整重建线上；③「本地未提交 → 线上已在用」存在版本漂移风险。</div>
+<div class="p2"><strong>P2 — 文档与实现不一致：</strong>记忆、README 类记录仍写 GitHub Pages，实际为 Cloudflare。建议在仓库 README 或部署说明中明确真实托管渠道，避免后续误操作。</div>
+</section>
+
+<!-- 3. 文件结构 -->
+<section class="card" id="structure">
+<h2>3. 文件结构审计</h2>
+<table>
+  <tr><th>路径</th><th>内容</th><th>体积</th><th>健康度</th></tr>
+  <tr><td>根目录</td><td>3 个 HTML + favicon + CNAME + 2 个搜索引擎验证文件 + .gitignore</td><td>~83KB</td><td><span class="tag tag-green">正常</span></td></tr>
+  <tr><td><code>down/</code></td><td>6 个分发 ZIP（ph×2 / we×1 / speed×3）</td><td>~130MB</td><td><span class="tag tag-amber">含重复与历史残留</span></td></tr>
+  <tr><td><code>static/</code></td><td>favicon + music.mp3(3.2MB) + images/ 13 个文件</td><td>~3.9MB</td><td><span class="tag tag-amber">images/ 全为死文件</span></td></tr>
+  <tr><td><code>.workbuddy/</code></td><td>备份 / 报告 / 混淆与截图脚本</td><td>—</td><td><span class="tag tag-blue">工作区，不入库</span></td></tr>
+</table>
+<p class="warn">注：<code>static/images/</code> 下 13 个文件<b>全部未被</b> index.html / download.html 引用（已 grep 验证），为 2022 旧版残留；<code>down/speed/</code> 三个 ZIP 字节完全相同（md5 一致，13.29MB×3≈39.9MB 纯冗余）。</p>
+</section>
+
+<!-- 4. 代码质量 -->
+<section class="card" id="code">
+<h2>4. 代码质量</h2>
+<div class="grid2">
+  <div>
+    <h4>✓ 优势</h4>
+    <ul>
+      <li>index / download 均为自包含单文件，零外部依赖、零 HTTP 阻塞请求</li>
+      <li>25+ CSS 变量设计系统，两页 token 完全一致</li>
+      <li>Liquid Glass 质感完整：backdrop-filter + 渐变受光描边 + 镜面高光 + 噪点</li>
+      <li>响应式断点 900/760/430px + 移动端模糊降级 + 安全区 + 触摸反馈</li>
+      <li>IntersectionObserver 渐入、prefers-reduced-motion 降级、ARIA 标签、Esc 关窗</li>
+      <li>音乐懒加载默认关闭（已去除旧 autoplay）</li>
+    </ul>
+  </div>
+  <div>
+    <h4>⚠ 问题</h4>
+    <ul>
+      <li>两页内联 CSS 几乎完全重复（各 ~390 行），改设计需同步两处</li>
+      <li>keywords 黑帽堆砌（20+ 词，含 HACK/CHEAT）</li>
+      <li>Hero 直接展示「CrossFire VIP HACK CHEAT」字样</li>
+      <li>无 Schema.org 结构化数据、无隐私政策</li>
+      <li>Hero 4 个 CTA 中 2 个指向支付（店铺 mall + Purchase），转化路径重复、意图不聚焦</li>
+      <li>页脚文案「since 2099」（年份错误，2099 尚在未来）</li>
+      <li>download.html 存在未提交修改（PH 链接 088D89323 → 9D759C3），一旦误提交未同步会引入死链</li>
+    </ul>
+  </div>
+</div>
+<div class="p1"><strong>P1 — 存在混淆管线但当前未启用：</strong><code>.workbuddy/reports/obfuscate.js</code>（csso + html-minifier-terser + javascript-obfuscator）曾用于压平/混淆两页，并有 pre-obfuscate / pre-release 备份。当前工作区为可读版本，线上却是另一份构建——两者关系需厘清，避免「本地改源码、线上是老混淆包」的版本分裂。</div>
+</section>
+
+<!-- 5. 资源与仓库膨胀 -->
+<section class="card" id="resources">
+<h2>5. 资源冗余与仓库膨胀（v2 修正）</h2>
+<div class="grid3">
+  <div class="stat"><div class="num" style="color:var(--red)">~1.4GB</div><div class="label">Git 仓库体积（API 实测）</div></div>
+  <div class="stat"><div class="num" style="color:var(--red)">~40MB</div><div class="label">3 份相同加速器 ZIP</div></div>
+  <div class="stat"><div class="num" style="color:var(--amber)">~33MB</div><div class="label">历史 PH 残留 7A638484</div></div>
+</div>
+<table>
+  <tr><th>项</th><th>明细</th><th>处理建议</th></tr>
+  <tr><td>Git 历史膨胀</td><td>仓库 API <code>size=1,437,553 KB ≈ 1.4GB</code>，远超工作区 134MB——历史提交长期混入大体积二进制（ZIP / mp3 / 图片）</td><td><span class="tag tag-red">P0 建议 git filter-repo 瘦身，否则克隆/CI 极慢、易触发平台告警</span></td></tr>
+  <tr><td>重复 ZIP</td><td><code>down/speed/gytidj / PaoMianAccelerator / PaoMianJiasu</code> 三份 md5 完全一致</td><td><span class="tag tag-amber">仅保留 1 份</span></td></tr>
+  <tr><td>历史残留</td><td><code>down/ph/7A638484.zip</code>（32.5MB，未被页面引用）、<code>down/ph/2B4CA307.zip</code>（已删，索引仍跟踪）</td><td><span class="tag tag-amber">确认无用后删除并提交</span></td></tr>
+  <tr><td>死文件</td><td><code>static/images/</code> 13 个文件全部无引用（含 PanDownload/SpeedPan/bg.zip/logo.zip 等）</td><td><span class="tag tag-blue">一次性清理</span></td></tr>
+  <tr><td>音乐文件</td><td><code>static/music.mp3</code> 3.2MB，唯一被引用的静态资源</td><td><span class="tag tag-blue">保留（懒加载）</span></td></tr>
+</table>
+</section>
+
+<!-- 6. Git -->
+<section class="card" id="git">
+<h2>6. Git 状态</h2>
+<div class="grid2">
+  <div>
+    <h3>仓库指标</h3>
+    <table>
+      <tr><th>指标</th><th>值</th></tr>
+      <tr><td>提交总数</td><td class="num">71</td></tr>
+      <tr><td>分支</td><td><code>main</code>（唯一）</td></tr>
+      <tr><td>仓库可见性</td><td>public</td></tr>
+      <tr><td>首次提交</td><td>2022-01-30</td></tr>
+      <tr><td>最近提交</td><td>2026-08-26（ac48b0d）</td></tr>
+    </table>
+  </div>
+  <div>
+    <h3>提交信息质量</h3>
+    <table>
+      <tr><th>信息</th><th>次数</th><th>占比</th></tr>
+      <tr><td><code>1</code></td><td class="num">54</td><td class="num">76%</td></tr>
+      <tr><td><code>Update download.html</code></td><td class="num">10</td><td class="num">14%</td></tr>
+      <tr><td>Merge / 其他</td><td class="num">7</td><td class="num">10%</td></tr>
+    </table>
+    <p class="warn">76% 提交为无意义「1」，无法追溯意图。</p>
+  </div>
+</div>
+<h3>当前未提交变更</h3>
+<table>
+  <tr><th>文件</th><th>变更</th><th>风险</th></tr>
+  <tr><td><code>download.html</code></td><td>PH 链接 088D89323 → 9D759C3</td><td><span class="warn">线上已生效，本地未提交——两边状态漂移</span></td></tr>
+  <tr><td><code>404.html</code></td><td>仅文案「404 Not Found」→「网页找不到惹」（仍为旧样式）</td><td><span class="warn">改动极小，重写仍悬空</span></td></tr>
+  <tr><td><code>down/ph/2B4CA307.zip</code></td><td>工作区已删、索引仍跟踪</td><td><span class="warn">push 后线上旧链才会失效</span></td></tr>
+</table>
+<div class="diff"><strong>v2 修正：</strong>v1 称「404.html 待更新 / 9,552B」。实测磁盘 9,574B，仍为 2022 旧版；工作记忆声称「404 已重写为 Liquid Glass 20.9KB」<b>与磁盘不符</b>（未保存或已回退）。v1 与记忆均需以磁盘/线上实测为准。</div>
+</section>
+
+<!-- 7. 线上健康度实测 -->
+<section class="card" id="live">
+<h2>7. 线上健康度实测（v2 新增）</h2>
+<p>对线上全站关键 URL 逐一实测（2026-08-27 02:30，通过 Cloudflare 边缘）：</p>
+<table>
+  <tr><th>URL</th><th>状态</th><th>结论</th></tr>
+  <tr><td><code>/</code></td><td><span class="ok g"></span>200</td><td>首页正常，标题含「HACK CHEAT」</td></tr>
+  <tr><td><code>/download.html</code></td><td><span class="ok g"></span>200</td><td>已指向新版三链接</td></tr>
+  <tr><td><code>/down/vn/PaoMianHax-Vn-211103-2(Pass123).zip</code></td><td><span class="ok r"></span><b class="bad">404</b></td><td><b class="bad">VN 死链确认（线上 404）</b></td></tr>
+  <tr><td><code>/down/we/5C72CA.zip</code></td><td><span class="ok g"></span>200</td><td>WE 在线</td></tr>
+  <tr><td><code>/down/ph/9D759C3.zip</code></td><td><span class="ok g"></span>206</td><td>PH 新版在线（本地未入库文件）</td></tr>
+  <tr><td><code>/down/ph/088D89323.zip</code></td><td><span class="ok r"></span><b class="bad">404</b></td><td>旧 PH 链已失效（页面已替换 ✓）</td></tr>
+  <tr><td><code>/down/ph/7A638484.zip</code></td><td><span class="ok a"></span>206</td><td>历史残留仍可下，未被引用</td></tr>
+  <tr><td><code>/nonexistent</code></td><td><span class="ok a"></span>404</td><td>返回 CF 默认 404，自定义 404.html 未生效</td></tr>
+  <tr><td><code>/robots.txt</code> / <code>/sitemap.xml</code></td><td><span class="ok a"></span>200 / <b>404</b></td><td>robots 为 CF 默认；sitemap 缺失</td></tr>
+</table>
+<div class="banner-red"><strong>结论：</strong>三服下载中 <b>VN 为唯一死链（P0）</b>，PH 新旧切换已完成但仓库未同步；自定义 404 与 sitemap 未上线。</div>
+</section>
+
+<!-- 8. SEO -->
+<section class="card" id="seo">
+<h2>8. SEO & 可访问性</h2>
+<table>
+  <tr><th>维度</th><th>index</th><th>download</th><th>404</th></tr>
+  <tr><td>lang / description / canonical / OG / Twitter / robots</td><td class="good">✓ 全</td><td class="good">✓ 全</td><td class="bad">✗ 全缺</td></tr>
+  <tr><td>keywords</td><td class="warn">⚠ 黑帽堆砌</td><td class="warn">⚠ 黑帽堆砌</td><td class="bad">✗</td></tr>
+  <tr><td>Schema.org</td><td class="bad">✗</td><td class="bad">✗</td><td class="bad">✗</td></tr>
+  <tr><td>sitemap.xml</td><td class="bad">✗ 缺失</td><td colspan="2" class="warn">全站无</td></tr>
+  <tr><td>robots.txt</td><td colspan="3" class="warn">线上为 Cloudflare 默认（未声明 Disallow/Allow 规则）</td></tr>
+</table>
+<p class="warn">SEO 双刃：meta 基础齐全（相对成熟），但 keywords 堆砌 + 「HACK/CHEAT」高危词 + 无结构化数据 + 无 sitemap 拉低可信度；且该业务本身在主流搜索引擎属高风险类目。</p>
+</section>
+
+<!-- 9. 性能 -->
+<section class="card" id="perf">
+<h2>9. 性能</h2>
+<div class="grid2">
+  <div>
+    <h4>✓ 强项</h4>
+    <ul>
+      <li>HTML 内联、零外部请求，首屏近乎瞬时</li>
+      <li>3.2MB 音乐懒加载，不阻塞 LCP</li>
+      <li>favicon 仅 7.5KB</li>
+    </ul>
+  </div>
+  <div>
+    <h4>⚠ 注意</h4>
+    <ul>
+      <li>backdrop-filter 大面积毛玻璃在低端机易掉帧（已有 blur 降级）</li>
+      <li>30s 环境光动画持续运行，低端设备费电</li>
+      <li>最大下载包 32.6MB，CDN 走 Cloudflare 动态缓存（cf-cache-status: DYNAMIC，未配静态缓存策略）</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<!-- 10. UX -->
+<section class="card" id="ux">
+<h2>10. UX 评估</h2>
+<div class="grid2">
+  <div>
+    <h4>✓ 强项</h4>
+    <ul>
+      <li>视觉统一、动效精致（镜面扫光 / 玻璃高光 / spring 弹窗）</li>
+      <li>download 页信息极简、CTA 明确</li>
+    </ul>
+  </div>
+  <div>
+    <h4>⚠ 问题</h4>
+    <ul>
+      <li>Hero 4 个 CTA 同屏（店铺 / 下载 / Purchase / 社群），转化路径重复且主次不分</li>
+      <li>功能卡片文案空泛（"Normal full functions cheat"）</li>
+      <li>无 FAQ（杀软误报 / 系统要求 / 购买流程无集中入口）</li>
+      <li>下载页无文件哈希校验值；密码统一为「123」</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<!-- 11. 风险 -->
+<section class="card" id="risk">
+<h2>11. 风险评估</h2>
+<div class="grid2">
+  <div class="p0"><h4>P0 — 外挂分发法律/平台风险</h4>公开提供游戏作弊工具下载，违反游戏 EULA，可能导致封号、法律纠纷、CDN/搜索引擎下架。属业务模式固有风险。</div>
+  <div class="p0"><h4>P0 — VN 死链仍在线</h4>download.html 标记 VN「Updating」但链接 404，损害信任且浪费流量。</div>
+  <div class="p0"><h4>P0 — 发布链路与 git 脱节</h4>线上=手工/Cloudflare 直传构建，git 落后（未提交 PH 链接、本地无 9D759C3、404/robots 线上未生效），存在「仓库≠线上」的不可重建风险。</div>
+  <div class="p1"><h4>P1 — 仓库 1.4GB 膨胀</h4>历史二进制污染，克隆/CI 慢，接近平台限制红线。</div>
+  <div class="p1"><h4>P1 — 「HACK/CHEAT」关键词 + keywords 堆砌</h4>可能被搜索引擎判垃圾信息。</div>
+  <div class="p1"><h4>P1 — 支付域名矛盾</h4>Hero「店铺」链 <code>mall.909net.cn</code>（境内），Purchase 链 <code>pay.paomfz.com</code>——双支付入口且域名归属不统一。</div>
+  <div class="p2"><h4>P2 — 无隐私政策 / 无分析埋点</h4>合规与转化数据均为空白。</div>
+</div>
+</section>
+
+<!-- 12. 路线图 -->
+<section class="card" id="roadmap">
+<h2>12. 优化路线图（按影响排序）</h2>
+<h3>P0 · 立即</h3>
+<div class="p0">1. <b>修复 VN 死链</b>：补上传 VN 包并同步线上 + 提交 git，或从页面移除 VN 卡片标注「暂不可用」。</div>
+<div class="p0">2. <b>厘清并固化发布链路</b>：确认线上为 Cloudflare Pages 直传；将「本地→构建(混淆?)→上传」流程写成脚本/文档，消灭「线上与 git 漂移」。</div>
+<div class="p0">3. <b>重写 404 为 Liquid Glass 并确认线上生效</b>（当前磁盘旧版、线上未生效、记忆却称已完成——需落地并验证）。</div>
+<h3>P1 · 本周</h3>
+<div class="p1">4. <b>Git 仓库瘦身</b>：git filter-repo 剔除历史大文件（ZIP/mp3），体积 1.4GB→预计 &lt;10MB；新增二进制改走外链。</div>
+<div class="p1">5. <b>清理冗余</b>：speed/ 保留 1 份 ZIP；确认删除 7A638484 / 2B4CA307；清 static/images 死文件。</div>
+<div class="p1">6. <b>统一支付入口</b>：Hero 收敛为 1 个购买 CTA，统一域名；评估是否保留 mall.909net.cn。</div>
+<div class="p1">7. <b>精简 keywords + 去 HACK/CHEAT 高危词 + 加 Schema.org + sitemap.xml</b>。</div>
+<div class="p1">8. <b>提交规范</b>：下载页未提交修改先提交；此后用 Conventional Commits。</div>
+<h3>P2 · 本月</h3>
+<div class="p2">9. CSS 提取共用文件；10. FAQ 页（杀软白名单/系统要求/购买）；11. 版本号统一 + 下载页显示文件 SHA256；12. 隐私政策；13. 轻量转化埋点；14. 多语言（VI/PH 已面向海外服）。</div>
+
+<h3>综合健康度</h3>
+<div class="grid3">
+  <div class="stat"><div class="num">7.0</div><div class="label">综合 / 10（v1 7.5，因托管脱节与仓库膨胀下调）</div></div>
+  <div class="stat"><div class="num">8.0</div><div class="label">设计 / 10</div></div>
+  <div class="stat"><div class="num">4.5</div><div class="label">工程维护 / 10</div></div>
+</div>
+<p><strong>一句话结论：</strong>设计与前端质量是明显长板；最大短板已从「页内细节」转移到「工程治理」——发布链路脱节、Git 1.4GB 膨胀、VN 死链、404 未落地。优先把「线上＝仓库」的一致性做扎实，健康度可快速回到 8.5+。</p>
+</section>
+
+<div class="footer-note">
+报告生成：WorkBuddy · 2026-08-27 02:40 · 基于本地全量审计 + 线上实测（DNS/响应头/GitHub API/全站 URL 状态码）<br>
+v2 修正：404 真实状态、托管平台（Cloudflare≠GitHub Pages）、PH 新链在线、仓库 1.4GB、机器人/自定义 404 实况、工作记忆与磁盘不符等
+</div>
+
+</body>
+</html>

@@ -2,7 +2,8 @@
 
 ## 项目概述
 PaoMian Hax（泡面辅助）官网，提供 CrossFire（穿越火线）游戏第三方辅助工具下载。
-域名：www.paomfz.com，纯静态网站，无后端。GitHub Pages 托管（qqxiaochen/webw），CNAME 绑定。
+域名：www.paomfz.com，纯静态网站，无后端。
+**托管实测（2026-08-27）＝ Cloudflare（非 GitHub Pages）**：DNS→172.66.40.151，Server: cloudflare，CF 默认 robots/404；GitHub /pages API 返回 404（仓库未启用 GH Pages）。线上文件哈希≠本地 git（疑 Cloudflare Pages 直传混淆构建），**git 仓库仅源码留档，非发布通道**——发布链路与 git 存在漂移，为待治理 P0。仓库体积 1.4GB（历史二进制污染）。
 
 ## 技术栈
 - 前端：纯 HTML + CSS + JS，**无任何外部依赖**（旧 jQuery / UIkit / widget 体系已全部移除）
@@ -13,10 +14,13 @@ PaoMian Hax（泡面辅助）官网，提供 CrossFire（穿越火线）游戏�
 
 ## 关键文件
 - `index.html`：**35KB 自包含单文件**（HTML+CSS+JS 内联），macOS Liquid Glass v3 风格，无外部依赖
-- `download.html`：下载页（VN/WE/PH 三服；**VN 链接死链**，down/vn/ 目录不存在）
-- 根 `core.css`（243KB）与 `static/css/core.css`（251KB）两份，根副本无人引用
-- `static/`：含大量死文件（yii.js、APlayer、Meting、jquery-1.9.1、base.css、popup.css）
-- `down/`：14 个 ZIP ≈394MB（speed/ 下 3 个 ZIP 字节相同）；`webw.zip` 400MB 未跟踪备份
+- `download.html`：下载页（VN/WE/PH 三服；**VN 线上实测 404 死链**；PH 已换 9D759C3.zip 但本地未提交）。2026-08-27 扩大下载点击区：卡片上半部分（flag / 标题 / 版本 / 状态）点击触发下载，Intro 按钮与密码区除外。
+- `404.html`：**已落地 Apple Liquid Glass（visionOS 风格）2026-08-27**，v2 优化：玻璃厚度折射边（外白描边+底内暗边）、`mask-image` 羽化光泽、背景增粉/青多层让玻璃透色、子面板层次折射（顶高光+底内暗边）、hover 浮起+scale；`backdrop-filter:saturate(200%)`。HTML 结构不变（仿浏览器窗口），仅替换 `<style>`；旧实色全清；脚本保留。原版备份 `.workbuddy/backups/404.html.bak-20260827`，CSS 副本 `.workbuddy/tmp/404-liquid-glass.css`。注意：线上 CF 仍返默认 404，本地改版需走 Cloudflare 发布链路才会生效（见 P0 发布漂移）
+- `down/`：6 个 ZIP ≈130MB（ph×2 / we×1 / speed×3；speed/ 3 份字节相同，7A638484/2B4CA307 为历史残留）
+- `static/`：仅 music.mp3(3.2MB) 被引用；images/ 13 文件全为死文件
+
+## 协作偏好
+- 视觉/改版类任务：**先输出页面结构分析 + Liquid Glass 改造方案映射（复用现有 class），获用户确认后再落地代码，不要直接覆盖**。用户明确区分"分析+方案"与"改代码"两步。
 
 ## 代码质量问题记录
 1. index.html HTML 结构错乱（`</body>` 提前闭合、SVG defs 截断），需重写
@@ -41,3 +45,5 @@ PaoMian Hax（泡面辅助）官网，提供 CrossFire（穿越火线）游戏�
   - 验证：Edge 无头截图 5 张（浅/深/移动/弹窗/hover），JS 零错误
   - 旧版备份：`.workbuddy/backups/index.html.bak-20260825`
 - 深度分析报告：`.workbuddy/reports/paomian-website-analysis.html`（2026-08-25，含 P0/P1/P2 优化路线图）
+- **2026-08-27** 深度分析 v2：`.workbuddy/reports/project-deep-analysis-20260827-v2.html`（含线上全站 URL 实测表、部署架构真相、仓库膨胀分析）
+- **2026-08-27** `404.html` 重构为 Apple Liquid Glass：复用现有 class（.wrap/.main/.header-tabs/.header-url/.main-content 及控件），新增 `:root` 设计令牌、`.wrap::before/::after` 双 ambient 光晕、`.main::before/::after` 受光高光+shine 扫过；保留 URL 回填与 5 秒跳转脚本。临时 CSS 副本 `.workbuddy/tmp/404-liquid-glass.css`

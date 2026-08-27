@@ -263,6 +263,9 @@ body::after{
 .dl-pass b{color:#fff}
 .dl-actions{display:flex;gap:10px;margin-top:auto}
 .dl-actions .btn{flex:1;justify-content:center;min-width:0;padding:12px 14px;font-size:13.5px}
+.dl-card{cursor:pointer}
+.dl-card .dl-pass{cursor:text}
+.dl-card .dl-actions{cursor:default}
 
 .dl-note{
   max-width:760px;margin:40px auto 0;text-align:center;font-size:13.5px;color:var(--text-2);line-height:1.8;
@@ -461,7 +464,7 @@ body::after{
         </div>
         <p class="dl-pass">Password: <b>123</b> · 解壓密碼: <b>123</b></p>
         <div class="dl-actions">
-          <a class="btn btn-primary" href="https://www.paomfz.com/down/ph/088D89323.zip" target="_blank">
+          <a class="btn btn-primary" href="https://www.paomfz.com/down/ph/9D759C3.zip" target="_blank">
             下載 Download
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M4.5 19.5h15"/></svg>
           </a>
@@ -609,6 +612,15 @@ body::after{
   });
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+  });
+
+  /* ---------- 6. 卡片内容区点击触发下载（Intro 与密码区除外） ---------- */
+  document.querySelectorAll('.dl-card').forEach(function(card){
+    card.addEventListener('click', function(e){
+      if(e.target.closest('.dl-actions') || e.target.closest('.dl-pass')) return;
+      var link = card.querySelector('.btn-primary');
+      if(link){ link.click(); }
+    });
   });
 })();
 </script>

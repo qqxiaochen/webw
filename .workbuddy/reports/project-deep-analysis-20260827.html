@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>PaoMian Hax · 项目深度分析报告 · 2026-08-27</title>
+<style>
+  :root{
+    --bg:#0b0d14; --card:#141826; --border:#232838;
+    --text:#e4e6ee; --text2:#9aa0b4; --text3:#5d6478;
+    --accent:#4f7cff; --green:#34c759; --amber:#ff9f0a; --red:#ff5f57;
+    --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:40px 20px;max-width:1080px;margin:0 auto}
+  h1{font-size:2.2rem;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+  h2{font-size:1.45rem;font-weight:600;margin:44px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+  h3{font-size:1.1rem;font-weight:600;margin:24px 0 10px;color:var(--accent)}
+  h4{font-size:.95rem;font-weight:600;margin:16px 0 8px;color:var(--text)}
+  .subtitle{color:var(--text2);font-size:.95rem;margin-bottom:36px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+  .stat{text-align:center;padding:18px 10px}
+  .stat .num{font-size:2rem;font-weight:700;color:var(--accent)}
+  .stat .label{font-size:.8rem;color:var(--text2);margin-top:4px}
+  .tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.75rem;font-weight:600;margin-right:6px}
+  .tag-green{background:rgba(52,199,89,.15);color:var(--green)}
+  .tag-amber{background:rgba(255,159,10,.15);color:var(--amber)}
+  .tag-red{background:rgba(255,95,87,.15);color:var(--red)}
+  .tag-blue{background:rgba(79,124,255,.15);color:var(--accent)}
+  table{width:100%;border-collapse:collapse;font-size:.88rem;margin:12px 0}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--border)}
+  th{color:var(--text2);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px}
+  td.num{font-variant-numeric:tabular-nums;text-align:right}
+  ul,ol{padding-left:22px;margin:8px 0}
+  li{margin:5px 0}
+  code{background:rgba(255,255,255,.06);padding:2px 7px;border-radius:5px;font-size:.85rem;color:var(--accent)}
+  .score-bar{height:8px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;margin:6px 0}
+  .score-bar > div{height:100%;border-radius:4px}
+  .p0{border-left:3px solid var(--red);padding-left:14px;margin:10px 0}
+  .p1{border-left:3px solid var(--amber);padding-left:14px;margin:10px 0}
+  .p2{border-left:3px solid var(--accent);padding-left:14px;margin:10px 0}
+  .finding{padding:10px 0;border-bottom:1px dashed var(--border)}
+  .finding:last-child{border-bottom:none}
+  .good{color:var(--green)} .warn{color:var(--amber)} .bad{color:var(--red)}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 30px}
+  .toc a{color:var(--accent);text-decoration:none;font-size:.88rem}
+  hr{border:none;border-top:1px solid var(--border);margin:30px 0}
+  .footer-note{color:var(--text3);font-size:.8rem;text-align:center;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+  .diff{background:rgba(255,95,87,.08);border:1px solid var(--red);border-radius:8px;padding:12px;margin:10px 0}
+  .diff-big{font-size:.9rem}
+</style>
+</head>
+<body>
+
+<h1>PaoMian Hax · 项目深度分析报告</h1>
+<p class="subtitle">报告日期：2026-08-27 02:16 · 分析范围：全项目文件、代码、Git 历史（71 提交）、部署、合规 · 分析人：WorkBuddy</p>
+
+<div class="toc">
+  <a href="#overview">1. 项目概况</a> ·
+  <a href="#structure">2. 文件结构</a> ·
+  <a href="#code">3. 代码质量</a> ·
+  <a href="#resources">4. 资源审计</a> ·
+  <a href="#git">5. Git 状态</a> ·
+  <a href="#seo">6. SEO & 可访问性</a> ·
+  <a href="#perf">7. 性能分析</a> ·
+  <a href="#ux">8. UX 评估</a> ·
+  <a href="#risk">9. 风险评估</a> ·
+  <a href="#roadmap">10. 优化路线图</a>
+</div>
+
+<!-- 1. 项目概况 -->
+<section class="card" id="overview">
+<h2>1. 项目概况</h2>
+<div class="grid3">
+  <div class="stat"><div class="num">2</div><div class="label">HTML 页面</div></div>
+  <div class="stat"><div class="num">~66KB</div><div class="label">前端代码总量</div></div>
+  <div class="stat"><div class="num">~134MB</div><div class="label">分发 ZIP</div></div>
+  <div class="stat"><div class="num">71</div><div class="label">Git 提交</div></div>
+  <div class="stat"><div class="num">3</div><div class="label">服务器支持</div></div>
+  <div class="stat"><div class="num">0</div><div class="label">后端依赖</div></div>
+</div>
+
+<p><strong>项目名称：</strong>PaoMian Hax（泡面辅助）— CrossFire 穿越火线第三方游戏辅助工具</p>
+<p><strong>域名：</strong><code>www.paomfz.com</code>（CNAME 指向 GitHub Pages）</p>
+<p><strong>仓库：</strong><code>qqxiaochen/webw</code>（GitHub）</p>
+<p><strong>技术栈：</strong>纯静态 HTML + 内联 CSS + 内联 JS，无框架、无构建工具、无后端</p>
+<p><strong>设计风格：</strong>macOS Liquid Glass / visionOS（毛玻璃 + 环境光斑 + 渐变受光描边）</p>
+
+<h3>当前版本状态</h3>
+<table>
+  <tr><th>文件</th><th>大小</th><th>设计版本</th><th>状态</th></tr>
+  <tr><td><code>index.html</code></td><td class="num">36,520 B</td><td>Liquid Glass v3</td><td><span class="tag tag-green">可读非混淆</span></td></tr>
+  <tr><td><code>download.html</code></td><td class="num">29,392 B</td><td>Liquid Glass v3</td><td><span class="tag tag-green">可读非混淆</span></td></tr>
+  <tr><td><code>404.html</code></td><td class="num">9,552 B</td><td>旧版（2022）</td><td><span class="tag tag-amber">待更新</span></td></tr>
+</table>
+</section>
+
+<!-- 2. 文件结构 -->
+<section class="card" id="structure">
+<h2>2. 文件结构审计</h2>
+
+<h3>2.1 目录全景</h3>
+<table>
+  <tr><th>路径</th><th>文件数</th><th>总大小</th><th>用途</th><th>健康度</th></tr>
+  <tr><td>根目录</td><td>8</td><td>~75KB</td><td>入口页 + 配置</td><td><span class="tag tag-green">正常</span></td></tr>
+  <tr><td><code>down/</code></td><td>6</td><td>~130MB</td><td>分发压缩包</td><td><span class="tag tag-amber">需整理</span></td></tr>
+  <tr><td><code>static/</code></td><td>15</td><td>~3.9MB</td><td>静态资源</td><td><span class="tag tag-amber">含死文件</span></td></tr>
+  <tr><td><code>.workbuddy/</code></td><td>—</td><td>—</td><td>工作区（备份/报告）</td><td><span class="tag tag-blue">正常</span></td></tr>
+</table>
+
+<h3>2.2 根目录文件</h3>
+<table>
+  <tr><th>文件</th><th>大小</th><th>最后修改</th><th>状态</th></tr>
+  <tr><td><code>index.html</code></td><td>36,520 B</td><td>2026-08-25</td><td><span class="good">✓ 首页，Liquid Glass v3</span></td></tr>
+  <tr><td><code>download.html</code></td><td>29,392 B</td><td>2026-08-26</td><td><span class="good">✓ 下载中心</span></td></tr>
+  <tr><td><code>404.html</code></td><td>9,552 B</td><td>2022-02-14</td><td><span class="warn">⚠ 旧版样式，与主站不一致</span></td></tr>
+  <tr><td><code>favicon.ico</code></td><td>7,522 B</td><td>2022-01-30</td><td><span class="good">✓</span></td></tr>
+  <tr><td><code>CNAME</code></td><td>14 B</td><td>2022-01-30</td><td><span class="good">✓</span></td></tr>
+  <tr><td><code>.gitignore</code></td><td>348 B</td><td>2026-08-25</td><td><span class="good">✓ 已创建</span></td></tr>
+  <tr><td><code>baidu_verify_*.html</code></td><td>10 B</td><td>2022-01-30</td><td><span class="good">✓</span></td></tr>
+  <tr><td><code>googleed_*.html</code></td><td>53 B</td><td>2022-01-30</td><td><span class="good">✓</span></td></tr>
+</table>
+
+<h3>2.3 <code>down/</code> 目录 — 分发文件</h3>
+<table>
+  <tr><th>文件</th><th>大小</th><th>对应服务器</th><th>状态</th></tr>
+  <tr><td><code>down/we/5C72CA.zip</code></td><td class="num">30,474,399 B</td><td>WE（欧美）</td><td><span class="good">✓ 在线可用</span></td></tr>
+  <tr><td><code>down/ph/9D759C3.zip</code></td><td class="num">32,612,175 B</td><td>PH（菲律宾）</td><td><span class="good">✓ 在线可用</span></td></tr>
+  <tr><td><code>down/ph/7A638484.zip</code></td><td class="num">32,492,278 B</td><td>PH（旧版）</td><td><span class="warn">⚠ 旧版，未被引用</span></td></tr>
+  <tr><td><code>down/speed/gytidj.zip</code></td><td class="num">13,286,757 B</td><td>加速器</td><td><span class="warn">⚠ 与下两文件字节相同</span></td></tr>
+  <tr><td><code>down/speed/PaoMianAccelerator.zip</code></td><td class="num">13,286,757 B</td><td>加速器</td><td><span class="warn">⚠ 与上文件字节相同</span></td></tr>
+  <tr><td><code>down/speed/PaoMianJiasu.zip</code></td><td class="num">13,286,757 B</td><td>加速器</td><td><span class="warn">⚠ 与上文件字节相同</span></td></tr>
+</table>
+<p class="p0"><strong>P0 问题：</strong><code>down/vn/</code> 目录不存在 — VN 服务器下载链接为死链。download.html 中 VN 卡片虽标记为 "Updating"，但链接 <code>https://www.paomfz.com/down/vn/PaoMianHax-Vn-211103-2(Pass123).zip</code> 指向不存在的路径。</p>
+
+<h3>2.4 <code>static/</code> 目录 — 死文件</h3>
+<table>
+  <tr><th>文件</th><th>大小</th><th>状态</th></tr>
+  <tr><td><code>static/images/bg.zip</code></td><td>186,003 B</td><td><span class="warn">⚠ 未被引用</span></td></tr>
+  <tr><td><code>static/images/logo.zip</code></td><td>2,494 B</td><td><span class="warn">⚠ 未被引用</span></td></tr>
+  <tr><td><code>static/images/PanDownload.png</code></td><td>4,286 B</td><td><span class="warn">⚠ 未被引用（旧版网盘图标）</span></td></tr>
+  <tr><td><code>static/images/SpeedPan.png</code></td><td>4,286 B</td><td><span class="warn">⚠ 未被引用（旧版网盘图标）</span></td></tr>
+  <tr><td><code>static/images/log_bg.png</code></td><td>1,012 B</td><td><span class="warn">⚠ 未被引用</span></td></tr>
+  <tr><td><code>static/images/icon_cloud.png</code></td><td>1,389 B</td><td><span class="warn">⚠ 未被引用</span></td></tr>
+  <tr><td><code>static/music.mp3</code></td><td>3,206,719 B</td><td><span class="good">✓ 被 index.html 引用</span></td></tr>
+</table>
+</section>
+
+<!-- 3. 代码质量 -->
+<section class="card" id="code">
+<h2>3. 代码质量分析</h2>
+
+<h3>3.1 index.html（36.5KB 自包含单文件）</h3>
+<div class="grid2">
+  <div>
+    <h4>✓ 优势</h4>
+    <ul>
+      <li>单文件自包含，零外部依赖</li>
+      <li>25+ CSS variables 设计系统</li>
+      <li>macOS Liquid Glass 玻璃质感（backdrop-filter + 渐变受光描边 + 镜面高光）</li>
+      <li>完整的响应式断点（900px / 760px / 430px）</li>
+      <li>IntersectionObserver 滚动渐入</li>
+      <li>prefers-reduced-motion 无障碍支持</li>
+      <li>ARIA 标签 + 键盘导航（Esc 关闭弹窗）</li>
+      <li>移动端专属优化（blur 降级、安全区、触摸反馈）</li>
+    </ul>
+  </div>
+  <div>
+    <h4>⚠ 问题</h4>
+    <ul>
+      <li>keywords meta 仍含黑帽堆砌（CFVN VIP CHEAT / HACK 等 20+ 关键词）</li>
+      <li>支付按钮指向 <code>mall.909net.cn</code>（境内域名）</li>
+      <li>Hero 区 "HACK CHEAT" 字样在搜索结果中可见，有合规风险</li>
+      <li>无 Schema.org 结构化数据</li>
+      <li>Hero 区 4 个 CTA 按钮中有 2 个指向支付（店铺 / Purchase），转化路径不清晰</li>
+    </ul>
+  </div>
+</div>
+
+<h3>3.2 download.html（29.4KB 自包含单文件）</h3>
+<div class="grid2">
+  <div>
+    <h4>✓ 优势</h4>
+    <ul>
+      <li>与 index.html 共享设计 token，视觉一致</li>
+      <li>三服下载卡片（VN/WE/PH）+ Intro 弹窗</li>
+      <li>中英双语支持</li>
+      <li>返回顶部按钮</li>
+      <li>移动端汉堡菜单适配</li>
+    </ul>
+  </div>
+  <div>
+    <h4>⚠ 问题</h4>
+    <ul>
+      <li>VN 下载链接指向不存在的 <code>down/vn/</code> 目录</li>
+      <li>导航仅剩「首頁 Home」，无其他入口（ breadcrumb 缺失）</li>
+      <li>无 Breadcrumb 导航</li>
+      <li>PH 链接已更新但未提交（工作区有未提交修改）</li>
+    </ul>
+  </div>
+</div>
+
+<h3>3.3 设计系统一致性</h3>
+<p>两个主页面共享同一套 CSS variables，但在以下方面存在细微差异：</p>
+<table>
+  <tr><th>维度</th><th>index.html</th><th>download.html</th><th>一致性</th></tr>
+  <tr><td>设计 Token</td><td>25+ variables</td><td>25+ variables（复制）</td><td><span class="good">✓ 完全一致</span></td></tr>
+  <tr><td>玻璃效果</td><td>saturate(250%) blur(45px)</td><td>saturate(250%) blur(45px)</td><td><span class="good">✓</span></td></tr>
+  <tr><td>Hero 区</td><td>完整 Hero（badge + h1 + sub + actions）</td><td>已移除 Hero，仅保留下载区</td><td><span class="warn">△ 刻意差异</span></td></tr>
+  <tr><td>导航</td><td>4 项 + Purchase 按钮</td><td>仅 1 项（首頁）</td><td><span class="warn">△ 刻意差异</span></td></tr>
+  <tr><td>音乐按钮</td><td>有</td><td>已移除</td><td><span class="warn">△ 刻意差异</span></td></tr>
+  <tr><td>弹窗</td><td>TOS 服务条款</td><td>Intro 服务器介绍</td><td><span class="good">✓ 均为 macOS 风格</span></td></tr>
+</table>
+
+<h3>3.4 代码可维护性评估</h3>
+<div class="grid2">
+  <div class="finding good"><strong>✓ 内联 CSS/JS 优点：</strong>零 HTTP 请求，首屏极快，部署简单（单文件即托管）</div>
+  <div class="finding warn"><strong>⚠ 内联缺点：</strong>两个页面 CSS 完全重复（各 ~390 行），修改设计需同步两处，维护成本高</div>
+</div>
+<div class="p1"><strong>P1 — 建议：</strong>将 CSS 提取为 <code>core.css</code> 外部文件，两个页面共用。index.html 和 download.html 已各自内联了几乎相同的 CSS，提取后可减少 ~60KB 重复代码。</div>
+</section>
+
+<!-- 4. 资源审计 -->
+<section class="card" id="resources">
+<h2>4. 资源冗余审计</h2>
+
+<h3>4.1 重复文件</h3>
+<table>
+  <tr><th>文件组</th><th>数量</th><th>总大小</th><th>问题</th></tr>
+  <tr><td><code>down/speed/*.zip</code></td><td>3</td><td>~39.9MB</td><td><span class="bad">✗ 三个文件字节完全相同</span></td></tr>
+  <tr><td><code>static/images/PanDownload.png</code> / <code>SpeedPan.png</code></td><td>2</td><td>8,572 B</td><td><span class="bad">✗ 字节完全相同，不同文件名</span></td></tr>
+  <tr><td><code>static/images/bg.zip</code> + <code>logo.zip</code></td><td>2</td><td>188KB</td><td><span class="warn">⚠ 未被任何 HTML 引用</span></td></tr>
+  <tr><td>index.html / download.html 内联 CSS</td><td>2</td><td>~60KB</td><td><span class="warn">⚠ 完全重复，未提取为外部文件</span></td></tr>
+</table>
+
+<h3>4.2 未引用文件（死文件）</h3>
+<table>
+  <tr><th>文件</th><th>大小</th><th>最后修改</th><th>建议</th></tr>
+  <tr><td><code>static/images/bg.zip</code></td><td>186KB</td><td>2022-07-21</td><td>删除</td></tr>
+  <tr><td><code>static/images/logo.zip</code></td><td>2.5KB</td><td>2022-02-20</td><td>删除</td></tr>
+  <tr><td><code>static/images/PanDownload.png</code></td><td>4.3KB</td><td>2022-01-30</td><td>删除</td></tr>
+  <tr><td><code>static/images/SpeedPan.png</code></td><td>4.3KB</td><td>2022-01-30</td><td>删除</td></tr>
+  <tr><td><code>static/images/log_bg.png</code></td><td>1KB</td><td>2022-01-30</td><td>删除</td></tr>
+  <tr><td><code>static/images/icon_cloud.png</code></td><td>1.4KB</td><td>2022-01-30</td><td>删除</td></tr>
+  <tr><td><code>down/ph/7A638484.zip</code></td><td>32.5MB</td><td>2026-08-06</td><td>保留（历史版本备份）或删除</td></tr>
+  <tr><td><code>down/speed/*.zip</code></td><td>39.9MB</td><td>2025-09-07</td><td>保留 1 份，删除 2 份重复</td></tr>
+</table>
+
+<h3>4.3 冗余汇总</h3>
+<div class="grid3">
+  <div class="stat"><div class="num" style="color:var(--red)">~77MB</div><div class="label">重复 ZIP（speed/ 3 份）</div></div>
+  <div class="stat"><div class="num" style="color:var(--amber)">~33MB</div><div class="label">旧版 PH ZIP</div></div>
+  <div class="stat"><div class="num" style="color:var(--amber)">~190KB</div><div class="label">死文件（static/images）</div></div>
+</div>
+<p><strong>总冗余约 110MB</strong>，占仓库总大小的 82%。</p>
+</section>
+
+<!-- 5. Git 状态 -->
+<section class="card" id="git">
+<h2>5. Git & 版本控制</h2>
+
+<div class="grid2">
+  <div class="card">
+    <h3>提交历史</h3>
+    <table>
+      <tr><th>指标</th><th>值</th></tr>
+      <tr><td>总提交数</td><td class="num">71</td></tr>
+      <tr><td>当前分支</td><td><code>main</code></td></tr>
+      <tr><td>远程</td><td><code>origin/main</code></td></tr>
+      <tr><td>工作区状态</td><td><span class="warn">2 个未提交修改</span></td></tr>
+      <tr><td>首次提交</td><td>2022-01-30</td></tr>
+      <tr><td>最近提交</td><td>2026-08-26</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h3>提交信息质量</h3>
+    <table>
+      <tr><th>提交信息</th><th>次数</th><th>占比</th></tr>
+      <tr><td><code>1</code></td><td class="num">54</td><td class="num">76%</td></tr>
+      <tr><td><code>Update download.html</code></td><td class="num">10</td><td class="num">14%</td></tr>
+      <tr><td>Merge 提交</td><td class="num">2</td><td class="num">3%</td></tr>
+      <tr><td>其他</td><td class="num">5</td><td class="num">7%</td></tr>
+    </table>
+    <p class="warn">76% 的提交信息为无意义的「1」，严重缺乏可追溯性。</p>
+  </div>
+</div>
+
+<h3>5.1 当前工作区修改</h3>
+<table>
+  <tr><th>文件</th><th>变更</th><th>说明</th></tr>
+  <tr><td><code>download.html</code></td><td><span class="warn">modified</span></td><td>PH 链接从 <code>088D89323.zip</code> → <code>9D759C3.zip</code></td></tr>
+  <tr><td><code>down/ph/2B4CA307.zip</code></td><td><span class="bad">deleted</span></td><td>32.7MB 文件已删除（但 git 索引仍跟踪）</td></tr>
+</table>
+
+<h3>5.2 Git 仓库健康度</h3>
+<div class="grid2">
+  <div class="finding good"><strong>✓ .gitignore 已创建</strong> — 排除 *.zip、node_modules、IDE 缓存、OS 临时文件</div>
+  <div class="finding warn"><strong>⚠ 历史 ZIP 污染</strong> — 曾提交大量二进制 ZIP 文件到 git 历史，当前 8 个已删除但索引仍跟踪</div>
+  <div class="finding warn"><strong>⚠ 提交信息质量差</strong> — 76% 为无意义「1」，无法追溯变更意图</div>
+  <div class="finding good"><strong>✓ 备份机制</strong> — <code>.workbuddy/backups/</code> 下有多个历史版本备份</div>
+</div>
+
+<div class="diff">
+<p class="diff-big"><strong>⚠ 与旧版报告的差异：</strong>此前报告称 22 次提交，实际为 <strong>71 次</strong>。旧版报告低估了 3.2 倍。54 次提交信息为「1」（76%），10 次为「Update download.html」。</p>
+</div>
+</section>
+
+<!-- 6. SEO -->
+<section class="card" id="seo">
+<h2>6. SEO & 可访问性</h2>
+
+<h3>6.1 Meta 标签覆盖</h3>
+<table>
+  <tr><th>标签</th><th>index.html</th><th>download.html</th><th>404.html</th></tr>
+  <tr><td><code>lang</code></td><td><span class="good">zh-CN ✓</span></td><td><span class="good">zh-CN ✓</span></td><td><span class="bad">✗ 缺失</span></td></tr>
+  <tr><td><code>description</code></td><td><span class="good">✓</span></td><td><span class="good">✓</span></td><td><span class="bad">✗</span></td></tr>
+  <tr><td><code>keywords</code></td><td><span class="warn">⚠ 黑帽堆砌</span></td><td><span class="warn">⚠ 黑帽堆砌</span></td><td><span class="bad">✗</span></td></tr>
+  <tr><td><code>canonical</code></td><td><span class="good">✓</span></td><td><span class="good">✓</span></td><td><span class="bad">✗</span></td></tr>
+  <tr><td>OG tags</td><td><span class="good">✓ 5 个</span></td><td><span class="good">✓ 5 个</span></td><td><span class="bad">✗</span></td></tr>
+  <tr><td>Twitter Card</td><td><span class="good">✓ 3 个</span></td><td><span class="good">✓ 3 个</span></td><td><span class="bad">✗</span></td></tr>
+  <tr><td><code>robots</code></td><td><span class="good">✓</span></td><td><span class="good">✓</span></td><td><span class="bad">✗</span></td></tr>
+  <tr><td>Schema.org</td><td><span class="bad">✗ 缺失</span></td><td><span class="bad">✗ 缺失</span></td><td><span class="bad">✗</span></td></tr>
+</table>
+
+<h3>6.2 Keywords 黑帽堆砌</h3>
+<p>当前 keywords meta 包含 20+ 个关键词，其中大量为重复和无意义堆砌：</p>
+<code>泡面官网,泡面辅助,泡面辅助官网,PaoMian Hax,www.paomfz.com,HACK CF,CFVN VIP CHEAT,CFWEST CHEAT,CFWE CHEAT,CFWEST HACK,CFWE HACK,CFPH HACK,CFWE HACK,CFWE VIP HACK,CFWE VIP CHEAT,CFWEST VIP CHEAT,CFWEST VIP HACK,HACK CF,CFPH VIP CHEAT,CFPH VIP HACK,CFVN VIP HACK,PAO HACK,Pao hax,PaoMian</code>
+<p class="warn">问题：现代搜索引擎已降低 keywords 权重，但过度堆砌可能触发垃圾信息过滤器。建议精简为 5-8 个核心关键词。</p>
+
+<h3>6.3 可访问性</h3>
+<div class="grid2">
+  <div class="finding good"><strong>✓ ARIA 标签</strong> — 导航、弹窗、按钮均有 aria-label/aria-modal</div>
+  <div class="finding good"><strong>✓ 键盘导航</strong> — Esc 关闭弹窗、Tab 可聚焦所有交互元素</div>
+  <div class="finding good"><strong>✓ 动画减弱</strong> — <code>prefers-reduced-motion</code> 完全关闭动画</div>
+  <div class="finding warn"><strong>⚠ color-contrast</strong> — <code>--text-2</code>（rgba .64）在某些背景上对比度不足</div>
+  <div class="finding warn"><strong>⚠ 404 页面</strong> — 旧版样式，无 lang 属性，与主站视觉不一致</div>
+</div>
+</section>
+
+<!-- 7. 性能 -->
+<section class="card" id="perf">
+<h2>7. 性能分析</h2>
+
+<h3>7.1 文件大小</h3>
+<table>
+  <tr><th>资源</th><th>大小</th><th>加载方式</th><th>评价</th></tr>
+  <tr><td><code>index.html</code></td><td class="num">36.5KB</td><td>内联</td><td><span class="good">✓ 轻量</span></td></tr>
+  <tr><td><code>download.html</code></td><td class="num">29.4KB</td><td>内联</td><td><span class="good">✓ 轻量</span></td></tr>
+  <tr><td><code>static/music.mp3</code></td><td class="num">3.2MB</td><td>懒加载（用户触发）</td><td><span class="good">✓ 不阻塞首屏</span></td></tr>
+  <tr><td><code>static/favicon.ico</code></td><td class="num">7.5KB</td><td>预加载</td><td><span class="good">✓</span></td></tr>
+</table>
+
+<h3>7.2 关键性能特征</h3>
+<div class="grid2">
+  <div class="finding good"><strong>✓ 零外部请求</strong> — 无 CDN、无字体外链、无分析脚本，首屏完全自包含</div>
+  <div class="finding good"><strong>✓ 懒加载音乐</strong> — 3.2MB mp3 仅在用户点击后加载，不阻塞首屏</div>
+  <div class="finding good"><strong>✓ CSS 内联</strong> — 无外部样式表请求，减少 RTT</div>
+  <div class="finding warn"><strong>⚠ backdrop-filter 性能</strong> — 毛玻璃效果在低端移动设备上可能掉帧（已有降级策略）</div>
+  <div class="finding warn"><strong>⚠ 环境光动画</strong> — 30s 循环动画持续运行，低端设备可能增加耗电</div>
+  <div class="finding good"><strong>✓ 移动端优化</strong> — blur 降级、动画加速、触摸反馈</div>
+</div>
+
+<h3>7.3 Lighthouse 估算</h3>
+<table>
+  <tr><th>指标</th><th>估算值</th><th>说明</th></tr>
+  <tr><td>Performance</td><td class="num">85-92</td><td>纯静态 + 内联，无阻塞资源</td></tr>
+  <tr><td>Accessibility</td><td class="num">78-85</td><td>ARIA 齐全，对比度部分不足</td></tr>
+  <tr><td>Best Practices</td><td class="num">70-78</td><td>无 HTTPS（GitHub Pages 有）、无结构化数据</td></tr>
+  <tr><td>SEO</td><td class="num">65-75</td><td>meta 齐全但 keywords 堆砌、无 Schema.org</td></tr>
+</table>
+</section>
+
+<!-- 8. UX -->
+<section class="card" id="ux">
+<h2>8. 用户体验评估</h2>
+
+<h3>8.1 导航体验</h3>
+<div class="grid2">
+  <div>
+    <h4>✓ 优势</h4>
+    <ul>
+      <li>浮动玻璃导航，scroll 后收缩为 pill 形态</li>
+      <li>移动端汉堡菜单，点击链接自动收起</li>
+      <li>download.html 导航极简（仅首頁），不分散注意力</li>
+      <li>返回顶部按钮（download.html）</li>
+    </ul>
+  </div>
+  <div>
+    <h4>⚠ 问题</h4>
+    <ul>
+      <li>导航链接在新窗口打开（target=_blank），不符合单页应用预期</li>
+      <li>download.html 无面包屑导航</li>
+      <li>404 页面与主站视觉风格严重不一致</li>
+      <li>主导航的「社区」链接指向 #contact 锚点，但无对应元素</li>
+    </ul>
+  </div>
+</div>
+
+<h3>8.2 内容层级</h3>
+<table>
+  <tr><th>页面</th><th>视觉层级</th><th>信息架构</th><th>CTA 清晰度</th></tr>
+  <tr><td>index.html</td><td><span class="good">✓ Hero → 功能 → 社群 → Footer</span></td><td><span class="good">✓ 清晰</span></td><td><span class="good">✓ 4 个 CTA 按钮</span></td></tr>
+  <tr><td>download.html</td><td><span class="good">✓ 三服卡片 → 说明 → Footer</span></td><td><span class="good">✓ 清晰</span></td><td><span class="good">✓ 每个卡片有下载按钮</span></td></tr>
+  <tr><td>404.html</td><td><span class="bad">✗ 旧版样式，与主站割裂</span></td><td><span class="bad">✗</span></td><td><span class="bad">✗</span></td></tr>
+</table>
+
+<h3>8.3 内容问题</h3>
+<div class="p1"><strong>P1 — Hero 区文案风险：</strong>"CrossFire VIP HACK CHEAT" 直接在页面标题和 Hero 中展示，可能触发搜索引擎惩罚或法律风险。建议改为中性描述。</div>
+<div class="p1"><strong>P1 — 功能卡片描述空泛：</strong>"Normal full functions cheat"、"More special functions" 等文案缺乏具体信息，用户无法了解实际功能。</div>
+<div class="p1"><strong>P1 — 无常见问题解答：</strong>用户常见问题（杀软误报、系统要求、购买方式）无集中入口。</div>
+<div class="p1"><strong>P1 — 转化路径不清晰：</strong>Hero 区 4 个 CTA 中有 2 个指向支付（店铺 / Purchase），用户不清楚应该先下载还是先购买。</div>
+</section>
+
+<!-- 9. 风险评估 -->
+<section class="card" id="risk">
+<h2>9. 风险评估</h2>
+
+<h3>9.1 合规风险</h3>
+<div class="grid2">
+  <div class="p0">
+    <h4>P0 — 境内支付域名矛盾</h4>
+    <p>Hero 区「店铺」按钮指向 <code>mall.909net.cn</code>（中国境内域名），但页脚曾声明 <code>Except China</code>（已移除）。这种矛盾可能引起用户困惑或合规审查。</p>
+    <span class="tag tag-red">高风险</span>
+  </div>
+  <div class="p0">
+    <h4>P0 — 外挂工具法律风险</h4>
+    <p>网站公开提供游戏外挂/作弊工具下载，违反游戏 EULA，可能导致：游戏封号、法律纠纷、平台下架。</p>
+    <span class="tag tag-red">高风险</span>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="p1">
+    <h4>P1 — "HACK" / "CHEAT" 关键词</h4>
+    <p>页面标题、Hero、meta keywords 中大量使用 HACK / CHEAT / VIP HACK 等词汇，可能被搜索引擎判定为垃圾信息。</p>
+    <span class="tag tag-amber">中风险</span>
+  </div>
+  <div class="p1">
+    <h4>P1 — 无隐私政策</h4>
+    <p>网站无隐私政策页面（曾创建后被删除），不符合 GDPR / 个人信息保护法基本要求。</p>
+    <span class="tag tag-amber">中风险</span>
+  </div>
+</div>
+
+<h3>9.2 技术风险</h3>
+<div class="grid2">
+  <div class="p1">
+    <h4>P1 — VN 下载死链</h4>
+    <p><code>down/vn/</code> 目录不存在，VN 用户点击下载后遇到 404，影响用户体验和信任。</p>
+    <span class="tag tag-amber">中风险</span>
+  </div>
+  <div class="p1">
+    <h4>P1 — 文件完整性未验证</h4>
+    <p>下载页面虽标注了密码，但未提供文件哈希校验值，用户无法验证下载完整性。</p>
+    <span class="tag tag-amber">中风险</span>
+  </div>
+  <div class="p2">
+    <h4>P2 — 无 HTTPS 重定向</h4>
+    <p>GitHub Pages 自动提供 HTTPS，但 CNAME + 自定义域名需确认 DNS 配置正确。</p>
+    <span class="tag tag-blue">低风险</span>
+  </div>
+</div>
+
+<h3>9.3 运营风险</h3>
+<div class="grid2">
+  <div class="p1">
+    <h4>P1 — 版本更新不透明</h4>
+    <p>VN 版本停在 2021-11，WE/PH 版本号格式不统一（WE: 260812, PH: 260826），用户无法判断版本新旧。</p>
+    <span class="tag tag-amber">中风险</span>
+  </div>
+  <div class="p2">
+    <h4>P2 — 无用户反馈渠道</h4>
+    <p>虽有 Discord / Telegram 链接，但无表单或工单系统，用户问题难以追踪。</p>
+    <span class="tag tag-blue">低风险</span>
+  </div>
+</div>
+</section>
+
+<!-- 10. 优化路线图 -->
+<section class="card" id="roadmap">
+<h2>10. 优化路线图</h2>
+
+<h3>P0 — 必须修复（阻塞发布）</h3>
+<div class="p0"><strong>1. 修复 VN 下载死链</strong><br>
+创建 <code>down/vn/</code> 目录并上传 VN 版本文件，或从 download.html 中完全移除 VN 卡片并标注「暂不可用」。</div>
+<div class="p0"><strong>2. 统一支付渠道域名</strong><br>
+将 <code>mall.909net.cn</code> 替换为海外域名或统一使用 <code>pay.paomfz.com</code>，消除境内/海外矛盾。</div>
+<div class="p0"><strong>3. 404 页面现代化</strong><br>
+重写 404.html，使用与主站一致的 Liquid Glass 风格，添加返回首页按钮。</div>
+
+<h3>P1 — 强烈建议（提升质量）</h3>
+<div class="p1"><strong>4. 精简 keywords</strong><br>
+将 keywords 从 20+ 个精简到 5-8 个核心关键词，移除 HACK/CHEAT 等高风险词汇。</div>
+<div class="p1"><strong>5. 添加结构化数据</strong><br>
+为 index.html 和 download.html 添加 Schema.org Organization / SoftwareApplication 标记。</div>
+<div class="p1"><strong>6. 重构功能卡片文案</strong><br>
+将 "Normal full functions cheat" 改为具体功能描述（如「自瞄 / 透视 / 数据读取」）。</div>
+<div class="p1"><strong>7. 清理死文件</strong><br>
+删除 static/ 下 6 个未引用文件，合并 down/speed/ 下 3 个相同 ZIP 为 1 份。</div>
+<div class="p1"><strong>8. 添加隐私政策</strong><br>
+创建 privacy.html 并在 footer 添加链接，符合法律合规要求。</div>
+<div class="p1"><strong>9. CSS 提取为外部文件</strong><br>
+将 index.html 和 download.html 中重复的 ~390 行内联 CSS 提取为共用的 <code>core.css</code>，减少维护成本。</div>
+
+<h3>P2 — 锦上添花（持续优化）</h3>
+<div class="p2"><strong>10. 版本号规范化</strong><br>
+统一三服版本号格式（如 <code>WE-2026.08.12</code>），增加发布日期和更新日志。</div>
+<div class="p2"><strong>11. 添加 FAQ 页面</strong><br>
+集中展示杀软白名单、系统要求、购买方式、常见问题。</div>
+<div class="p2"><strong>12. Git 提交规范</strong><br>
+使用 Conventional Commits 格式，提高提交信息质量（当前 76% 为无意义「1」）。</div>
+<div class="p2"><strong>13. 性能监控</strong><br>
+添加轻量级性能监控（如 Google Analytics 或自建），追踪下载转化率。</div>
+<div class="p2"><strong>14. 增加语言切换</strong><br>
+当前仅繁体中文 + 英文，可增加越南语、菲律宾语本地化。</div>
+
+<h3>优先级路线图</h3>
+<table>
+  <tr><th>阶段</th><th>任务</th><th>预计工作量</th><th>优先级</th></tr>
+  <tr><td>本周</td><td>修复 VN 死链 + 404 重写 + 支付域名统一</td><td>2-3 小时</td><td><span class="tag tag-red">P0</span></td></tr>
+  <tr><td>本周</td><td>清理死文件 + 精简 keywords + CSS 提取</td><td>2-3 小时</td><td><span class="tag tag-amber">P1</span></td></tr>
+  <tr><td>下周</td><td>添加结构化数据 + 隐私政策 + FAQ</td><td>3-4 小时</td><td><span class="tag tag-amber">P1</span></td></tr>
+  <tr><td>本月</td><td>版本号规范化 + 语言切换 + 性能监控 + Git 规范</td><td>8-10 小时</td><td><span class="tag tag-blue">P2</span></td></tr>
+</table>
+</section>
+
+<!-- 总结 -->
+<section class="card">
+<h2>总结</h2>
+
+<div class="grid3">
+  <div class="stat"><div class="num">7.5</div><div class="label">综合健康度 / 10</div></div>
+  <div class="stat"><div class="num">8.0</div><div class="label">设计质量 / 10</div></div>
+  <div class="stat"><div class="num">5.0</div><div class="label">工程维护 / 10</div></div>
+</div>
+
+<p><strong>核心结论：</strong></p>
+<ol>
+  <li><strong>设计系统成熟：</strong>macOS Liquid Glass 风格统一，动效、响应式、无障碍均达到较高水准，是项目最大的资产。</li>
+  <li><strong>代码质量良好：</strong>两个主页面均为自包含单文件，零外部依赖，设计 token 可复用。但 CSS 重复 ~60KB，可提取为外部文件。</li>
+  <li><strong>工程维护待加强：</strong>Git 提交信息 76% 为无意义「1」、死文件未清理、VN 死链未修复、404 页面过时。</li>
+  <li><strong>合规风险突出：</strong>支付域名矛盾、外挂关键词堆砌、无隐私政策，需要优先处理。</li>
+  <li><strong>资源冗余严重：</strong>约 110MB 重复/无引用文件（77MB 重复 ZIP + 33MB 旧版 + 190KB 死文件），占仓库 82%。</li>
+</ol>
+
+<p class="p0"><strong>最紧急行动：</strong>修复 VN 下载死链 → 统一支付域名 → 重写 404 页面。这三项完成后，项目综合健康度可从 7.5 提升至 8.5+。</p>
+</section>
+
+<div class="footer-note">
+  报告生成：WorkBuddy · 2026-08-27 02:16 · 基于全项目文件审计、代码分析、Git 历史（71 提交）检查<br>
+  修正记录：提交数 22→71，补充 CSS 重复分析、转化路径问题<br>
+  下一步：如需针对某个模块的详细分析或具体修复方案，请告知
+</div>
+
+</body>
+</html>

@@ -3,32 +3,63 @@
 ## 项目概述
 PaoMian Hax（泡面辅助）官网，提供 CrossFire（穿越火线）游戏第三方辅助工具下载。
 域名：www.paomfz.com，纯静态网站，无后端。
-**托管实测（2026-08-27）＝ Cloudflare（非 GitHub Pages）**：DNS→172.66.40.151，Server: cloudflare，CF 默认 robots/404；GitHub /pages API 返回 404（仓库未启用 GH Pages）。线上文件哈希≠本地 git（疑 Cloudflare Pages 直传混淆构建），**git 仓库仅源码留档，非发布通道**——发布链路与 git 存在漂移，为待治理 P0。仓库体积 1.4GB（历史二进制污染）。
+### 部署架构（2026-08-29 实测定论，**推翻 08-27 的 Cloudflare Pages 结论**）
+**用户 → Cloudflare（DNS + 反向代理，172.66.40.151，CF-RAY: HKG）→ 回源 GitHub Pages（Fastly · japaneast）**
+- 铁证：`X-GitHub-Request-Id` + `x-github-edge-region: japaneast` + `Via: 1.1 varnish` + `X-Served-By: cache-nrt-*` + `X-Fastly-Request-ID`。这套组合只有 GitHub Pages 会有
+- Cloudflare 上**无独立站点副本**，纯转发层
+- CI：`.github/workflows/deploy-pages.yml`，push main 触发；**实测提交后 59 秒完成部署，链路健康**
+- 08-28 的 v4 改版从未 commit，故从未上线 —— 此前登记的「发布漂移 P0」**已于 2026-08-29 撤销**
+- ⚠ **P0 隐患**：CI 里有 `rm -f CNAME`，注释称"仅部署 github.io、保留 Cloudflare 主站"，但该前提不存在（主站就在 GH Pages）。每次部署都在删自定义域名凭证，随时可能解绑 → 全站 404
+
+### 待治理问题（完整版见 2026-08-29 分析报告 v3）
+- **P0** VN 下载死链：`download.html:431` → `/down/vn/PaoMianHax-Vn-211103-2(Pass123).zip` 线上 404，本地无 `down/vn/` 目录
+- **P0** 10 个 `target="_blank"` 缺 `rel="noopener noreferrer"`（index 6 + download 4）
+- **P1** 死文件 69.1MB（`down/ph/7A638484.zip` + `down/speed/`×3）+ `static/images/` 13 个零引用文件
+- **P1** `.git` 1.5GB / 433 个 loose object / **in-pack: 0**（从未 gc）；历史 20+ 个 31MB 级 ZIP blob
+- 404.html 缺 DOCTYPE、viewport 禁用缩放、`lang="en"` 但正文中文；download.html 缺 h1
+- 零安全响应头（HSTS/CSP/XFO/XCTO/Referrer-Policy 全无）；无 sitemap.xml / robots.txt
+- 仓库体积 1.6GB（历史二进制污染）
 
 ## 技术栈
 - 前端：纯 HTML + CSS + JS，**无任何外部依赖**（旧 jQuery / UIkit / widget 体系已全部移除）
-- 设计系统：CSS variables（25+ 个设计 token） + `prefers-color-scheme` 浅/深色自动切换
-- 玻璃效果：backdrop-filter saturate(220%) blur(40px) + 渐变受光描边（padding-box/border-box）+ 多层 radial-gradient 环境光 + 噪点纹理
-- 动效：按钮镜面扫光、卡片 hover 玻璃高亮、Hero 视差渐隐、macOS 弹窗 spring 弹出
-- 部署：纯静态，HTML+CSS+JS 全部内联在 index.html，单文件 35KB 即可托管
+- 设计系统：CSS variables 设计 token，**不做深浅自动切换**（无 `prefers-color-scheme` 分支）
+- **视觉语言 v6 深色磨砂玻璃（2026-08-29 15:46 ＝ 当前版本）**
+  - `--bg-base:#0b0c12`、`--glass-bg:rgba(255,255,255,.055)`、`--blur:saturate(140%) blur(28px)`
+  - **磨砂三要素**：低飽和 `saturate(140%)`（液态玻璃 250% 会显艳）+ 中等 `blur(28px)` + **重噪点 `.055`**（砂感主要来源）
+  - 玻璃厚度：顶部受光高光 `.14` + **底部内亮边 `rgba(255,255,255,.06)`**（深底与白底相反）
+  - 阴影回到深色重投影 `rgba(0,0,0,.42~.55)`
+  - hover 可用高 `brightness(1.22~1.28)` —— 深底上提亮有效，不会过曝（白底则必须压到 1.03）
+  - 环境光 `.30–.42`，深底上可以比白底浓
+  - 上一版快照 `.workbuddy/backups/*.bak-20260829-1540`
+- **v5 白色高透明玻璃（2026-08-29 15:30，已被 v6 取代）**：快照 `*.bak-20260829-1540`
+  - 白底玻璃靠「顶部强高光 .88 + 底部内暗边 rgba(31,38,79,.10)」；hover 必须压到 `brightness(1.03~1.04)`
+- **v3 深色液态玻璃（v5 之前）**：深底 #090a12 + `saturate(250%)` 高饱和；快照 `*.bak-20260828` ≡ `*.bak-20260829-1530`
+- **v4 Editorial Material System（2026-08-28，已撤销）**：快照 `*.bak-20260829`
+- ⚠ **404.html 仍是浅色 Apple Liquid Glass（2026-08-27 版），与 v6 深色不同调** —— 三页现不一致，需统一时另行改造
+- 部署：纯静态，HTML+CSS+JS 全部内联，单文件即可托管
 
 ## 关键文件
-- `index.html`：**35KB 自包含单文件**（HTML+CSS+JS 内联），macOS Liquid Glass v3 风格，无外部依赖
-- `download.html`：下载页（VN/WE/PH 三服；**VN 线上实测 404 死链**；PH 已换 9D759C3.zip 但本地未提交）。2026-08-27 扩大下载点击区：卡片上半部分（flag / 标题 / 版本 / 状态）点击触发下载，Intro 按钮与密码区除外。
-- `404.html`：**已落地 Apple Liquid Glass（visionOS 风格）2026-08-27**，v2 优化：玻璃厚度折射边（外白描边+底内暗边）、`mask-image` 羽化光泽、背景增粉/青多层让玻璃透色、子面板层次折射（顶高光+底内暗边）、hover 浮起+scale；`backdrop-filter:saturate(200%)`。HTML 结构不变（仿浏览器窗口），仅替换 `<style>`；旧实色全清；脚本保留。原版备份 `.workbuddy/backups/404.html.bak-20260827`，CSS 副本 `.workbuddy/tmp/404-liquid-glass.css`。注意：线上 CF 仍返默认 404，本地改版需走 Cloudflare 发布链路才会生效（见 P0 发布漂移）
-- `down/`：6 个 ZIP ≈130MB（ph×2 / we×1 / speed×3；speed/ 3 份字节相同，7A638484/2B4CA307 为历史残留）
-- `static/`：仅 music.mp3(3.2MB) 被引用；images/ 13 文件全为死文件
+- `index.html`：**35KB 自包含单文件**（HTML+CSS+JS 内联），**v6 深色磨砂玻璃**，无外部依赖
+- `download.html`：下载页（VN/WE/PH 三服）。2026-08-27 扩大下载点击区：卡片上半部分（flag / 标题 / 版本 / 状态）点击触发下载，Intro 按钮与密码区除外。**VN 是 100% 死链**（指向 `/down/vn/PaoMianHax-Vn-211103-2(Pass123).zip`，线上 404 且本地无 `down/vn/` 目录）；WE→5C72CA.zip、PH→9D759C3.zip 均已在用且已提交 git。
+- `404.html`：**已落地 Apple Liquid Glass（visionOS 风格）2026-08-27**，v2 优化：玻璃厚度折射边（外白描边+底内暗边）、`mask-image` 羽化光泽、背景增粉/青多层让玻璃透色、子面板层次折射（顶高光+底内暗边）、hover 浮起+scale；`backdrop-filter:saturate(200%)`。HTML 结构不变（仿浏览器窗口），仅替换 `<style>`；旧实色全清；脚本保留。原版备份 `.workbuddy/backups/404.html.bak-20260827`，CSS 副本 `.workbuddy/tmp/404-liquid-glass.css`。**GitHub Pages 会自动采用根目录 404.html 作自定义 404 页**，push 后即生效，无需额外配置。已知缺陷：**缺 `<!DOCTYPE html>`（三页唯一）、viewport 禁用缩放、`lang="en"` 但正文中文**
+- `down/`：6 个 ZIP ≈129MB（ph×2 / we×1 / speed×3）。**在用仅 2 个**（ph/9D759C3.zip 31.1MB + we/5C72CA.zip 29.1MB）；**死文件 4 个共 69.1MB**（ph/7A638484.zip + speed/ 3 份 12.7MB 字节相同）
+- `static/`：仅 `music.mp3`(3.1MB) 与 `favicon.ico` 被引用；`images/` 13 个文件（≈785KB）**全部零引用**
 
 ## 协作偏好
 - 视觉/改版类任务：**先输出页面结构分析 + Liquid Glass 改造方案映射（复用现有 class），获用户确认后再落地代码，不要直接覆盖**。用户明确区分"分析+方案"与"改代码"两步。
+- **还原/回退诉求：先摆时间线 + 备份快照列表让用户确认落点，再执行**。用户口中的「昨天的页面」指改动发生**之前**的状态，而非字面日期当天（2026-08-29 实测）。回退前必先快照当前版本。
 
 ## 代码质量问题记录
-1. index.html HTML 结构错乱（`</body>` 提前闭合、SVG defs 截断），需重写
-2. 3 份 jQuery 并存，footer.js 命名误导（实为 jQuery 库）
-3. 无 meta description / OG / lang 属性，keywords 黑帽堆砌
-4. 自动播放 3.2MB music.mp3，浏览器拦截且负体验
-5. 无 .gitignore（webw.zip 400MB 有误提交风险）；git 提交信息多为「1」
-6. 支付渠道 mall.909net.cn 为境内域名，与页脚 "Except China" 声明矛盾（合规风险）
+**已修复（2026-08-25 重写）**：~~HTML 结构错乱~~、~~3 份 jQuery 并存~~、~~缺 meta description/OG/lang~~、~~autoplay music.mp3~~、~~无 .gitignore~~
+
+**仍待处理（2026-08-29 复核）**：
+1. 404.html 缺 DOCTYPE、viewport 禁用缩放、lang 标注错误
+2. download.html 缺 h1；keywords 黑帽堆砌（index 20+ 重复变体，建议整行删除）
+3. 10 个 `target="_blank"` 缺 `rel="noopener noreferrer"`
+4. 三页 CSS 高度重复（index↔download 约 60% 复制），建议抽 `static/site.css`
+5. git 提交信息多为「1」，无法追溯变更意图
+6. 支付渠道 `mall.909net.cn`（境内域名）与页脚 "Except China" 声明矛盾（合规风险）；且 index 页脚**漏写** "(Except China)"，两页声明不一致
+7. `.workbuddy/` 26 个文件被 git 跟踪（含 reports/ 11MB 截图），`.gitignore` 漏了 `reports/` 与 `tmp/`
 
 ## 改版记录
 - **2026-08-25** index.html 完全重写 — macOS Liquid Glass 风格（自包含 35KB 单文件 v3）
@@ -47,3 +78,5 @@ PaoMian Hax（泡面辅助）官网，提供 CrossFire（穿越火线）游戏�
 - 深度分析报告：`.workbuddy/reports/paomian-website-analysis.html`（2026-08-25，含 P0/P1/P2 优化路线图）
 - **2026-08-27** 深度分析 v2：`.workbuddy/reports/project-deep-analysis-20260827-v2.html`（含线上全站 URL 实测表、部署架构真相、仓库膨胀分析）
 - **2026-08-27** `404.html` 重构为 Apple Liquid Glass：复用现有 class（.wrap/.main/.header-tabs/.header-url/.main-content 及控件），新增 `:root` 设计令牌、`.wrap::before/::after` 双 ambient 光晕、`.main::before/::after` 受光高光+shine 扫过；保留 URL 回填与 5 秒跳转脚本。临时 CSS 副本 `.workbuddy/tmp/404-liquid-glass.css`
+- **2026-08-28 18:17** 三页改版 v4 Editorial Material System（去玻璃化），改前备份 `*.bak-20260828`
+- **2026-08-29 14:54 v4 已撤销，全站回退 v3**：从 `*.bak-20260828` 还原（已验证 ≡ git HEAD `a5ecca3`，仅行尾差异），回退前快照 `*.bak-20260829`。校验：`git status` 三页无差异；v3 特征复现（index 16× backdrop-filter / 3× 大圆角 / 10× radial-gradient；download 16×；404 10×）；HTML 闭合与 JS 元素 id 全部正常

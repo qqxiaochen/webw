@@ -24,7 +24,7 @@
 <meta name="twitter:description" content="CrossFire 穿越火線 VIP 輔助工具，WE / VN / PH 全服下載。">
 <meta name="twitter:image" content="https://www.paomfz.com/static/favicon.ico">
 <link rel='shortcut icon' type='image/x-icon' href='static/favicon.ico'>
-<meta name="theme-color" content="#0b0d14">
+<meta name="theme-color" content="#0b0c12">
 
 <style>
 /* ============================================================
@@ -42,29 +42,35 @@
   --radius-sm:12px;
   --radius-pill:999px;
 
-  --accent:#4f7cff;
-  --accent-soft:rgba(79,124,255,.16);
-  --accent-glow:rgba(79,124,255,.38);
-  --green:#34c759;
-  --amber:#ff9f0a;
+  /* 語義色（深底上提亮以維持對比） */
+  --accent:#6d9bff;
+  --accent-soft:rgba(109,155,255,.16);
+  --accent-glow:rgba(109,155,255,.30);
+  --green:#30d158;
+  --amber:#ffb340;
 
-  --text-1:#f5f5f7;
-  --text-2:rgba(245,245,247,.64);
-  --text-3:rgba(245,245,247,.4);
+  /* 文字（深色主題） */
+  --text-1:#f2f3f7;
+  --text-2:rgba(242,243,247,.66);
+  --text-3:rgba(242,243,247,.52);
 
-  --glass-bg:rgba(24,27,38,.12);
-  --glass-bg-strong:rgba(28,31,44,.25);
-  --glass-bg-hover:rgba(42,46,62,.20);
-  --glass-border:rgba(255,255,255,.12);
-  --glass-line:rgba(255,255,255,.06);
-  --glass-highlight:rgba(255,255,255,.20);
-  --blur:saturate(250%) blur(45px);
+  /* 磨砂玻璃（深底）——低飽和 + 中等模糊 + 重噪點，柔和不刺眼 */
+  --glass-bg:rgba(255,255,255,.055);
+  --glass-bg-strong:rgba(255,255,255,.11);
+  --glass-bg-hover:rgba(255,255,255,.15);
+  --glass-border:rgba(255,255,255,.13);
+  --glass-line:rgba(255,255,255,.07);
+  --glass-highlight:rgba(255,255,255,.16);
+  --blur:saturate(140%) blur(28px);
 
-  --shadow-glass:0 14px 46px rgba(0,0,0,.5),0 3px 10px rgba(0,0,0,.35),inset 0 1px 0 var(--glass-highlight);
-  --shadow-float:0 26px 70px rgba(0,0,0,.62),0 5px 18px rgba(0,0,0,.42);
+  /* 陰影（深底重投影，壓出層次） */
+  --shadow-glass:0 10px 34px rgba(0,0,0,.42),0 2px 8px rgba(0,0,0,.30),inset 0 1px 0 var(--glass-highlight);
+  --shadow-float:0 24px 60px rgba(0,0,0,.55),0 6px 18px rgba(0,0,0,.38);
 
-  --bg-base:#090a12;
-  --grain-opacity:.05;
+  /* 背景 */
+  --bg-base:#0b0c12;
+  /* 磨砂的「砂」感主要來自噪點，比光面玻璃高一檔 */
+  --grain-opacity:.055;
 }
 
 /* ---------- 2. Base & Ambient Background ---------- */
@@ -78,28 +84,19 @@ body{
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
 }
-::selection{background:var(--accent-soft)}
+::selection{background:rgba(109,155,255,.28)}
 
+/* 環境光光斑层：深底上濃一檔，让磨砂玻璃透出柔和色暈 */
 body::before{
   content:"";position:fixed;inset:-12%;z-index:-2;pointer-events:none;
   background:
-    radial-gradient(44% 40% at 15% 18%, rgba(96,128,255,.68), transparent 66%),
-    radial-gradient(38% 34% at 85% 12%, rgba(160,120,255,.58), transparent 66%),
-    radial-gradient(48% 44% at 76% 86%, rgba(56,180,245,.55), transparent 68%),
-    radial-gradient(36% 32% at 18% 82%, rgba(255,130,190,.42), transparent 70%),
-    radial-gradient(26% 24% at 62% 32%, rgba(255,255,255,.55), transparent 72%);
+    radial-gradient(46% 42% at 14% 16%, rgba(72,104,235,.42), transparent 66%),
+    radial-gradient(40% 36% at 86% 10%, rgba(140,96,230,.36), transparent 66%),
+    radial-gradient(50% 46% at 78% 88%, rgba(40,150,220,.34), transparent 68%),
+    radial-gradient(38% 34% at 16% 84%, rgba(220,96,160,.30), transparent 70%),
+    radial-gradient(28% 26% at 60% 34%, rgba(255,255,255,.10), transparent 72%);
   animation:ambient 30s ease-in-out infinite alternate;
   will-change:transform;
-}
-@media (prefers-color-scheme: dark){
-  body::before{
-    background:
-      radial-gradient(44% 40% at 15% 18%, rgba(84,116,255,.62), transparent 66%),
-      radial-gradient(38% 34% at 85% 12%, rgba(148,108,255,.55), transparent 66%),
-      radial-gradient(48% 44% at 76% 86%, rgba(48,148,238,.5), transparent 68%),
-      radial-gradient(36% 32% at 18% 82%, rgba(240,106,168,.42), transparent 70%),
-      radial-gradient(26% 24% at 62% 32%, rgba(255,255,255,.14), transparent 72%);
-  }
 }
 @keyframes ambient{
   0%{transform:translate3d(0,0,0) scale(1)}
@@ -112,40 +109,30 @@ body::after{
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* 通用玻璃面板（核心材質）：磨砂玻璃——半透明白疊加 + 受光描邊 */
 .glass{
   position:relative;
   background:
     linear-gradient(var(--glass-bg),var(--glass-bg)) padding-box,
-    linear-gradient(160deg, rgba(255,255,255,.8) 0%, rgba(255,255,255,.2) 26%, rgba(255,255,255,.1) 52%, rgba(255,255,255,.4) 100%) border-box;
+    linear-gradient(160deg, rgba(255,255,255,.24) 0%, rgba(255,255,255,.07) 26%, rgba(255,255,255,.04) 52%, rgba(255,255,255,.16) 100%) border-box;
   -webkit-backdrop-filter:var(--blur);
   backdrop-filter:var(--blur);
   border:1px solid transparent;
   border-radius:var(--radius-lg);
   box-shadow:var(--shadow-glass);
 }
-@media (prefers-color-scheme: dark){
-  .glass::before{
-    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-    background:
-      linear-gradient(115deg, rgba(255,255,255,.3) 0%, rgba(255,255,255,.08) 20%, transparent 40%),
-      linear-gradient(to bottom, rgba(255,255,255,.2), transparent 55%);
-  }
-  .glass::after{
-    content:"";position:absolute;inset:auto 0 0 0;height:35%;
-    border-radius:inherit;pointer-events:none;
-    background:linear-gradient(to top, rgba(255,255,255,.12), transparent 60%);
-  }
-}
+/* 頂部受光：深底上玻璃本身比背景亮，斜向高光讀出受光面 */
 .glass::before{
   content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   background:
-    linear-gradient(115deg, rgba(255,255,255,.3) 0%, rgba(255,255,255,.08) 20%, transparent 40%),
-    linear-gradient(to bottom, rgba(255,255,255,.2), transparent 55%);
+    linear-gradient(115deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.05) 20%, transparent 42%),
+    linear-gradient(to bottom, rgba(255,255,255,.10), transparent 58%);
 }
+/* 底部內反射：深底上玻璃厚度表現為「內亮邊」（白底是暗邊，正好相反） */
 .glass::after{
-  content:"";position:absolute;inset:auto 0 0 0;height:35%;
+  content:"";position:absolute;inset:auto 0 0 0;height:38%;
   border-radius:inherit;pointer-events:none;
-  background:linear-gradient(to top, rgba(255,255,255,.12), transparent 60%);
+  background:linear-gradient(to top, rgba(255,255,255,.06), transparent 62%);
 }
 
 /* ---------- 3. Floating Glass Nav ---------- */
@@ -173,7 +160,7 @@ body::after{
   font-size:13.5px;color:var(--text-2);transition:background .3s,color .3s;
 }
 .nav-links a:hover{background:var(--glass-bg-hover);color:var(--text-1)}
-.nav-links a.active{background:var(--accent-soft);color:var(--text-1)}
+.nav-links a.active{background:rgba(109,155,255,.18);color:var(--text-1)}
 .nav-burger{display:none;width:40px;height:40px;border:none;border-radius:50%;
   background:var(--glass-bg-hover);cursor:pointer;align-items:center;justify-content:center;flex-direction:column;gap:4.5px}
 .nav-burger span{display:block;width:16px;height:1.6px;background:var(--text-1);border-radius:2px;transition:transform .3s,opacity .3s}
@@ -195,13 +182,13 @@ body::after{
 }
 .btn::before{
   content:"";position:absolute;top:0;bottom:0;left:-75%;width:46%;
-  background:linear-gradient(105deg,transparent,rgba(255,255,255,.55),transparent);
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.58),transparent);
   transform:skewX(-18deg);opacity:0;
   transition:left .7s cubic-bezier(.2,.7,.3,1),opacity .25s;
   pointer-events:none;
 }
 .btn:hover::before{left:135%;opacity:1}
-.btn:active{transform:scale(.96);filter:brightness(.96)}
+.btn:active{transform:scale(.96);filter:brightness(.94)}
 .btn-primary{
   background:linear-gradient(180deg,rgba(255,255,255,.16),transparent),var(--accent);
   color:#fff;
@@ -215,7 +202,7 @@ body::after{
   border-color:var(--glass-border);
   box-shadow:var(--shadow-glass);
 }
-.btn-glass:hover{background:var(--glass-bg-hover);transform:translateY(-2px) scale(1.02);filter:brightness(1.12)}
+.btn-glass:hover{background:var(--glass-bg-hover);transform:translateY(-2px) scale(1.02);filter:brightness(1.24) saturate(1.05)}
 .btn-ghost{background:transparent;border-color:var(--glass-line);color:var(--text-2)}
 .btn-ghost:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px)}
 .btn svg{width:15px;height:15px;flex:none;transition:transform .32s cubic-bezier(.2,.8,.25,1)}
@@ -236,13 +223,13 @@ body::after{
   display:flex;flex-direction:column;
   transition:transform .4s cubic-bezier(.2,.8,.25,1),filter .4s,box-shadow .4s,background .4s;
 }
-.dl-card:hover{transform:translateY(-7px) scale(1.022);filter:brightness(1.18) saturate(1.1);box-shadow:var(--shadow-float),inset 0 1px 0 var(--glass-highlight)}
+.dl-card:hover{transform:translateY(-7px) scale(1.022);filter:brightness(1.26) saturate(1.05);box-shadow:var(--shadow-float),inset 0 1px 0 var(--glass-highlight)}
 .dl-flag{
   display:inline-flex;align-items:center;justify-content:center;
   width:54px;height:54px;border-radius:var(--radius-md);margin-bottom:20px;
   font-size:18px;font-weight:700;letter-spacing:.5px;color:var(--accent);
-  background:var(--accent-soft);border:1px solid rgba(79,124,255,.22);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
+  background:var(--accent-soft);border:1px solid rgba(109,155,255,.24);
+  box-shadow:0 3px 12px rgba(109,155,255,.16),inset 0 1px 0 rgba(255,255,255,.14);
 }
 .dl-card h3{font-size:1.32rem;font-weight:600;letter-spacing:-.01em;line-height:1.35;margin-bottom:18px;color:var(--text-1)}
 .dl-meta{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
@@ -252,15 +239,15 @@ body::after{
 .state{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px}
 .state::before{content:"";width:7px;height:7px;border-radius:50%}
 .state-on{color:var(--green)}
-.state-on::before{background:var(--green);box-shadow:0 0 0 4px rgba(52,199,89,.18)}
+.state-on::before{background:var(--green);box-shadow:0 0 0 4px rgba(48,209,88,.20)}
 .state-up{color:var(--amber)}
-.state-up::before{background:var(--amber);box-shadow:0 0 0 4px rgba(255,159,10,.18)}
+.state-up::before{background:var(--amber);box-shadow:0 0 0 4px rgba(255,179,64,.20)}
 .dl-pass{
-  font-size:13px;color:rgba(220,225,240,.82);background:var(--glass-bg-strong);
+  font-size:13px;color:var(--text-2);background:var(--glass-bg-strong);
   border:1px solid var(--glass-line);border-radius:var(--radius-sm);
   padding:10px 14px;margin-bottom:20px;
 }
-.dl-pass b{color:#fff}
+.dl-pass b{color:var(--text-1)}
 .dl-actions{display:flex;gap:10px;margin-top:auto}
 .dl-actions .btn{flex:1;justify-content:center;min-width:0;padding:12px 14px;font-size:13.5px}
 .dl-card{cursor:pointer}
@@ -291,7 +278,7 @@ body::after{
 .modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;
   visibility:hidden;opacity:0;transition:visibility 0s .4s,opacity .35s}
 .modal.open{visibility:visible;opacity:1;transition:visibility 0s,opacity .35s}
-.modal-backdrop{position:absolute;inset:0;background:rgba(12,14,24,.34);
+.modal-backdrop{position:absolute;inset:0;background:rgba(4,5,10,.5);
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .modal-window{
   position:relative;width:min(520px,100%);max-height:82svh;overflow:auto;
@@ -365,7 +352,7 @@ body::after{
 
 /* ---------- 12. Mobile-specific FX ---------- */
 @media (max-width:760px){
-  :root{--blur:saturate(200%) blur(26px)}
+  :root{--blur:saturate(130%) blur(18px)}
   body::before{animation-duration:52s}
   .nav-brand small{transition:opacity .35s,max-height .35s}
   .nav.scrolled .nav-brand small{opacity:0;max-height:0}

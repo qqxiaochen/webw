@@ -1,0 +1,249 @@
+<html lang="en"><head><meta charset="UTF-8"><title>Page Not Found · 泡面 404</title> <link rel="shortcut icon" href="/favicon.ico"><meta http-equiv="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><meta name="renderer" content="webkit"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=0"><meta name="apple-mobile-web-app-capable" content="yes"><style type="text/css">
+/* ============================================================
+   PaoMian 404 — Editorial Material System · v4
+   ------------------------------------------------------------
+   本頁是全站唯一「背景複雜」的場景：視窗浮在一張被柔化、
+   去飽和的背景圖之上 —— 這才是玻璃真正該出場的地方。
+   因此這裡保留強玻璃（blur 28px + saturate 150%），
+   但去掉：漂浮動畫、光澤掃過、彩色光球、hover 抬升、30px 大圓角。
+   視窗圓角收到 3px，玻璃厚度只用「頂部 1px 內高光 + 底部 1px 內暗邊」表達。
+   內容採非對稱：左側主文案 / 右側刻度軌，背景一個被裁切的巨大 404 數字。
+   ============================================================ */
+
+:root{
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+
+  --s-0:#0A0908;
+  --s-1:#100E0C;
+  --s-2:#171412;
+
+  --paper:#F0EAE1;
+  --paper-2:rgba(240,234,225,.62);
+  --paper-3:rgba(240,234,225,.38);
+  --paper-4:rgba(240,234,225,.22);
+
+  --line:rgba(240,234,225,.13);
+  --line-2:rgba(240,234,225,.30);
+
+  --accent:#E8501A;
+
+  --r-1:2px;
+  --r-2:3px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+a{color:inherit;text-decoration:none;background-color:transparent}
+li{list-style:none}
+.clearfix:after{content:'';display:table;clear:both}
+
+/* ---------- L0 背景 ---------- */
+body{
+  font-family:var(--sans);font-size:14px;color:var(--paper);
+  min-height:100vh;overflow:hidden;
+  background:
+    radial-gradient(70% 60% at 14% 0%,  rgba(232,80,26,.14), transparent 62%),
+    radial-gradient(60% 50% at 92% 92%, rgba(198,172,146,.07), transparent 64%),
+    radial-gradient(50% 44% at 50% 108%,rgba(232,80,26,.05), transparent 66%),
+    var(--s-0);
+}
+.wrap{position:relative;min-height:100vh;width:100%;overflow:hidden}
+/* 兩團靜止的低飽和光：只負責讓玻璃「有東西可透」 */
+.wrap::before,.wrap::after{
+  content:'';position:absolute;border-radius:50%;
+  filter:blur(70px);z-index:0;pointer-events:none;
+}
+.wrap::before{
+  width:40vw;height:40vw;left:-10vw;top:-12vw;
+  background:radial-gradient(circle,rgba(232,80,26,.16),rgba(232,80,26,0) 70%);
+}
+.wrap::after{
+  width:46vw;height:46vw;right:-14vw;bottom:-16vw;
+  background:radial-gradient(circle,rgba(150,140,190,.10),rgba(150,140,190,0) 70%);
+}
+/* 原背景 SVG：降飽和 + 大模糊，從「彩虹裝飾」變成「環境反射源」 */
+.wrap-bg{
+  position:absolute;inset:0;z-index:0;
+  filter:blur(32px) saturate(.5);
+  opacity:.22;
+}
+.wrap-bg circle,.wrap-bg rect{stroke-width:0;transform:rotate(30deg) scale(1.1);transform-origin:center}
+
+/* ---------- L3 浮層：全站唯一一塊重玻璃 ---------- */
+.main{
+  position:absolute;top:50%;left:50%;z-index:2;
+  width:min(940px,calc(100vw - 32px));
+  max-height:calc(100vh - 32px);
+  overflow:hidden;
+  border:1px solid var(--line-2);
+  background:linear-gradient(180deg, rgba(32,28,24,.76), rgba(15,13,11,.88));
+  -webkit-backdrop-filter:blur(28px) saturate(150%) brightness(1.06);
+  backdrop-filter:blur(28px) saturate(150%) brightness(1.06);
+  /* 厚度只用上下各 1px 表達，不做全周發光描邊 */
+  box-shadow:
+    0 40px 100px rgba(0,0,0,.60),
+    inset 0 1px 0 rgba(240,234,225,.13),
+    inset 0 -1px 0 rgba(0,0,0,.55);
+  border-radius:var(--r-2);
+  transform:translate(-50%,-50%);
+  transition:border-color .4s var(--ease);
+}
+.main::before{display:none}      /* 移除整塊頂部高光 */
+.main::after{display:none}       /* 移除 shine sweep */
+.main:hover{transform:translate(-50%,-50%);border-color:var(--line-2)}
+
+/* ---------- 瀏覽器外框：hairline + 等寬字，不做膠囊 ---------- */
+.header-tabs{
+  width:100%;height:44px;padding:0 12px;
+  display:flex;align-items:center;
+  background:rgba(240,234,225,.03);
+  border-bottom:1px solid var(--line);
+  border-radius:var(--r-2) var(--r-2) 0 0;
+  box-shadow:none;position:relative;
+}
+.header-tabs .tab{
+  position:relative;height:28px;min-width:0;
+  padding:0 12px;margin-right:6px;
+  display:flex;align-items:center;
+  border-radius:var(--r-1) var(--r-1) 0 0;
+  background:transparent;
+  border:1px solid var(--line);border-bottom:none;
+  color:var(--paper-2);line-height:28px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  box-shadow:none;
+  transition:color .25s var(--ease),border-color .25s var(--ease);
+}
+.header-tabs .tab span{float:none;display:flex;align-items:center}
+.header-tabs .tab i{
+  position:relative;float:none;display:block;
+  width:9px;height:9px;margin:0 0 0 12px;flex:none;
+  cursor:pointer;transform:rotate(45deg);
+}
+.header-tabs .tab i:before{content:'';position:absolute;top:4px;left:0;width:100%;height:1px;background:var(--paper-4);border-radius:0}
+.header-tabs .tab i:after{content:'';position:absolute;left:4px;top:0;width:1px;height:100%;background:var(--paper-4);border-radius:0}
+.header-tabs .tab:hover{background:transparent;color:var(--paper);border-color:var(--line-2);transform:none}
+
+.header-tabs .tab-add{
+  position:relative;width:20px;height:20px;margin-left:4px;flex:none;
+  border-radius:var(--r-1);
+  background:transparent;
+  border:1px solid var(--line);
+  box-shadow:none;
+  transition:border-color .25s var(--ease);
+}
+.header-tabs .tab-add:before{content:'';position:absolute;top:9px;left:5px;width:8px;height:1px;background:var(--paper-3);border-radius:0}
+.header-tabs .tab-add:after{content:'';position:absolute;left:9px;top:5px;width:1px;height:8px;background:var(--paper-3);border-radius:0}
+.header-tabs .tab-add:hover{border-color:var(--line-2);background:transparent;transform:none}
+
+.header-tabs .tabs-tool{margin-left:auto;display:flex;align-items:center;height:100%}
+.header-tabs .tabs-tool a{position:relative;width:14px;height:14px;margin:0 0 0 14px;cursor:pointer;transition:opacity .25s}
+.header-tabs .tabs-tool .btn-min:before{content:'';position:absolute;top:6px;left:0;width:100%;height:1px;background:var(--paper-3);border-radius:0}
+.header-tabs .tabs-tool .btn-max:before{content:'';position:absolute;top:0;left:0;width:14px;height:14px;border:1px solid var(--paper-3);border-radius:1px;box-sizing:border-box}
+.header-tabs .tabs-tool .btn-close{transform:rotate(45deg)}
+.header-tabs .tabs-tool .btn-close:before{content:'';position:absolute;top:6px;left:0;width:14px;height:1px;background:var(--accent);border-radius:0}
+.header-tabs .tabs-tool .btn-close:after{content:'';position:absolute;left:6px;top:0;width:1px;height:14px;background:var(--accent);border-radius:0}
+.header-tabs .tabs-tool a:hover{opacity:.65}
+
+.header-url{
+  width:100%;height:44px;padding:8px 10px;
+  display:flex;align-items:center;
+  background:rgba(240,234,225,.02);
+  border-bottom:1px solid var(--line);
+  box-shadow:none;
+}
+.header-url a{
+  position:relative;height:28px;width:28px;margin:0 3px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:var(--r-1);
+  background:transparent;
+  border:1px solid var(--line);
+  box-shadow:none;
+  transition:border-color .25s var(--ease),background .25s var(--ease);
+}
+.header-url a svg{margin:0}
+.header-url a .arrow{fill:none;stroke:var(--paper-3);stroke-width:1.6px;stroke-linecap:round;stroke-linejoin:round}
+.header-url .btn-next .arrow{transform:rotate(180deg);stroke:var(--paper-4)}
+.header-url .btn-refresh path{fill:none;stroke:var(--paper-3);stroke-width:1.6px;stroke-linecap:round;stroke-linejoin:round;transform-origin:center;transform:rotate(40deg)}
+.header-url .btn-refresh polyline{fill:var(--paper-3);transform-origin:center;transform:rotate(40deg)}
+.header-url a:hover{background:rgba(240,234,225,.05);border-color:var(--line-2);transform:none;box-shadow:none}
+.header-url a:active{transform:none}
+.header-url input[type=text]{
+  height:28px;flex:1;margin-left:8px;padding:0 12px;
+  border:1px solid var(--line);border-radius:var(--r-1);
+  background:transparent;color:var(--paper-2);
+  font-family:var(--mono);font-size:11px;letter-spacing:.02em;
+  box-shadow:none;
+}
+.header-url input[type=text]:focus{outline:none;border-color:var(--line-2);background:transparent}
+
+/* ---------- 內容：非對稱（主文左 / 刻度軌右） ---------- */
+.main-content{
+  position:relative;overflow:hidden;
+  min-height:clamp(280px,44vh,380px);
+  display:grid;grid-template-columns:minmax(0,1fr) clamp(80px,12vw,140px);
+  column-gap:clamp(16px,3vw,32px);align-items:end;
+  padding:clamp(34px,6vw,60px) clamp(20px,4vw,40px) clamp(30px,5vw,48px);
+  background:transparent;border:0;border-radius:0;box-shadow:none;
+}
+/* 被裁切的巨大 404：排版元素，不是裝飾光球 */
+.main-content::before{
+  content:"404";
+  position:absolute;right:-.05em;top:50%;
+  transform:translateY(-54%);
+  font-family:var(--mono);font-size:clamp(9rem,27vw,17rem);
+  font-weight:600;letter-spacing:-.06em;line-height:.75;
+  color:rgba(240,234,225,.045);
+  white-space:nowrap;pointer-events:none;
+}
+/* 右側刻度軌 */
+.main-content::after{
+  content:'';grid-column:2;grid-row:1/3;
+  align-self:stretch;justify-self:end;width:30px;
+  border-left:1px solid var(--line);
+  background:repeating-linear-gradient(to bottom,var(--line-2) 0 1px,transparent 1px 10px);
+  background-size:9px 100%;background-repeat:no-repeat;
+}
+.main-content h5{grid-column:1;padding:0;font-weight:500;text-align:left}
+.main-content h5 span{
+  position:relative;display:block;
+  font-size:clamp(2.1rem,6.2vw,3.5rem);
+  color:var(--paper);letter-spacing:-.03em;line-height:1.02;
+}
+/* 移除四顆彩色光球 */
+.main-content h5 span:before,
+.main-content h5 span:after,
+.main-content h5 span i:before,
+.main-content h5 span i:after{display:none}
+.main-content p{grid-column:1;margin-top:18px;font-size:15px;text-align:left;color:var(--paper-2);line-height:1.6}
+
+.main-content h5 .sub-en,
+.main-content p .sub-en{display:block;font-family:var(--mono);color:var(--paper-3);line-height:1.5}
+.main-content h5 .sub-en{margin-top:14px;font-size:12.5px;letter-spacing:.08em;font-weight:400}
+.main-content p .sub-en{margin-top:8px;font-size:11.5px;letter-spacing:.04em;opacity:.9}
+.header-tabs .tab .en{font-size:10px;margin-left:8px;color:var(--paper-4);letter-spacing:.06em;font-weight:400;text-transform:none}
+
+/* ---------- 行動端 ---------- */
+@media (max-width:680px){
+  .main{width:calc(100vw - 24px)}
+  .header-tabs{padding:0 10px}
+  .header-tabs .tab{min-width:0;padding:0 10px;font-size:10px}
+  .header-tabs .tab .en{display:none}
+  .main-content{
+    grid-template-columns:minmax(0,1fr);
+    min-height:clamp(240px,40vh,320px);
+  }
+  .main-content::after{display:none}
+  .main-content::before{font-size:clamp(7rem,34vw,11rem);opacity:.8}
+  .main-content h5 span{font-size:clamp(1.9rem,9vw,2.6rem)}
+  .main-content h5 .sub-en{margin-top:12px;font-size:11.5px}
+  .main-content p{font-size:14px}
+  .main-content p .sub-en{font-size:11px;margin-top:7px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+
+</style></head><body><div class="wrap"><svg class="wrap-bg" width="98vw" height="99vh" viewBox="0 0 400 400"><defs><linearGradient id="gradient1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="20%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="40%" stop-color="#c4efff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#e7c4ff" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#c4d6ff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#a3bbff" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#73dcfe" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient4" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#fec0dd" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#a3bbff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient5" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#c4d6ff" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#e7c4ff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient6" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="40%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#c4efff" stop-opacity="0.2"></stop><stop offset="90%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><radialGradient id="gradient7" fx="50%" fy="50%" r="65%" spreadMethod="pad"><stop offset="0%" stop-color="#eefafe" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></radialGradient></defs><rect x="50" y="0" width="50" height="400" style="fill:url(#gradient1)"></rect><rect x="100" y="0" width="50" height="400" style="fill:url(#gradient2)"></rect><rect x="150" y="0" width="50" height="400" style="fill:url(#gradient3)"></rect><rect x="200" y="0" width="50" height="400" style="fill:url(#gradient4)"></rect><rect x="250" y="0" width="50" height="400" style="fill:url(#gradient5)"></rect><rect x="300" y="0" width="50" height="400" style="fill:url(#gradient6)"></rect><circle cx="200" cy="200" r="300" style="fill:url(#gradient7)"></circle></svg><div class="main"><header><div class="header-tabs clearfix"><a href="javascript: void(0);" class="tab"><span>New Tab<span class="en">新建标签页</span></span> <i></i> </a><a href="javascript: void(0);" class="tab-add"></a><div class="tabs-tool"><a href="javascript: void(0);" class="btn-min"></a> <a href="javascript: void(0);" class="btn-max"></a> <a href="javascript: void(0);" class="btn-close"></a></div></div><div class="header-url clearfix"><svg style="display:none"><defs><g id="arrow"><path d="M8,2 L1,8 8,14"></path><path d="M2,8 L15,8"></path></g></defs></svg> <a href="javascript: void(0);" class="btn-back"><svg width="16" height="16"><use class="arrow" xlink:href="#arrow"></use></svg> </a><a href="javascript: void(0);" class="btn-next"><svg width="16" height="16"><use class="arrow" xlink:href="#arrow"></use></svg> </a><a href="javascript: void(0);" class="btn-refresh"><svg width="16" height="16"><path class="refresh-arc" d="M15,8  A7,7 0 1,1 8,1"></path><polyline points="8,-3  11,1  8,5"></polyline></svg> </a><input type="text" readonly="readonly" class="url-value"></div></header><div class="main-content"><h5><span>Page Not Found<i></i></span><span class="sub-en">网页找不到惹 ╥﹏╥...</span></h5><p>You'll be redirected to www.paomfz.com shortly<span class="sub-en">稍后将自动跳转到 www.paomfz.com</span></p></div></div></div><script type="text/javascript">window.onload=function(){document.getElementsByClassName("url-value")[0].value=location.href;setTimeout(function(){location.href='https://www.paomfz.com'},5000)}</script>
+
+</body></html>

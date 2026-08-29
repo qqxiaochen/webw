@@ -689,57 +689,29 @@ body::after{
     if(e.key === 'Escape' && modal.classList.contains('open')) closeModal();
   });
 
-  /* ---------- 6. 背景音樂開關（自動播放，點擊可暫停） ---------- */
+  /* ---------- 6. 背景音樂開關（懶加載，默認關閉） ---------- */
   var musicBtn = document.getElementById('musicBtn');
   var audio = null;
   var playing = false;
-
-  function initAudio(){
+  musicBtn.addEventListener('click', function(){
     if(!audio){
       audio = new Audio('static/music.mp3');
       audio.loop = true;
-      audio.preload = 'auto';
+      audio.preload = 'none';
     }
-  }
-
-  function tryPlay(){
-    if(!audio) initAudio();
-    if(!audio) return;
-    var p = audio.play();
-    if(p && p.catch){
-      p.then(function(){
-        playing = true;
-        musicBtn.classList.add('playing');
-        musicBtn.setAttribute('aria-label','暫停背景音樂');
-      }).catch(function(){
-        /* 瀏覽器阻止自動播放時，等待用戶首次交互 */
-        playing = false;
-        document.addEventListener('click', function handler(){
-          tryPlay();
-          document.removeEventListener('click', handler);
-        }, {once: true});
-      });
-    }else{
-      playing = true;
-      musicBtn.classList.add('playing');
-      musicBtn.setAttribute('aria-label','暫停背景音樂');
-    }
-  }
-
-  musicBtn.addEventListener('click', function(){
     if(playing){
       audio.pause();
       playing = false;
       musicBtn.classList.remove('playing');
       musicBtn.setAttribute('aria-label','播放背景音樂');
     }else{
-      tryPlay();
+      var p = audio.play();
+      if(p && p.catch) p.catch(function(){ /* 瀏覽器阻止時忽略，下次點擊重試 */ });
+      playing = true;
+      musicBtn.classList.add('playing');
+      musicBtn.setAttribute('aria-label','暫停背景音樂');
     }
   });
-
-  /* 頁面加載後嘗試自動播放 */
-  initAudio();
-  tryPlay();
 })();
 </script>
 </body>

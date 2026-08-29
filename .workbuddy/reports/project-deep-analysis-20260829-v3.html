@@ -1,628 +1,352 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PaoMian Hax 项目深度分析报告 v3 · 2026-08-29</title>
-<style>
-:root{
-  --bg:#f7f8fa; --panel:#ffffff; --ink:#1a1d24; --ink-2:#4a5168; --ink-3:#7a8296;
-  --line:#e4e8ef; --line-2:#eef1f6;
-  --blue:#3a6df0; --red:#d94f3d; --amber:#d98616; --green:#1f9d63; --purple:#7b5cf0; --cyan:#0e9bb5;
-  --red-bg:#fdf0ee; --amber-bg:#fdf6e9; --green-bg:#ecf8f2; --blue-bg:#eef3fe; --purple-bg:#f4f1fe;
-  --radius:14px;
-}
-*{margin:0;padding:0;box-sizing:border-box}
-body{
-  font:15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
-  background:var(--bg); color:var(--ink); padding:0 0 80px;
-  -webkit-font-smoothing:antialiased;
-}
-.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+# PaoMian Hax 项目深度分析报告
 
-/* ---------- Header ---------- */
-.hero{
-  background:linear-gradient(150deg,#1a2340 0%,#2a3557 45%,#3d2f52 100%);
-  color:#fff; padding:56px 0 48px; margin-bottom:36px;
-  position:relative; overflow:hidden;
-}
-.hero::after{
-  content:''; position:absolute; inset:0;
-  background:
-    radial-gradient(60% 80% at 12% 10%, rgba(122,162,255,.28), transparent 60%),
-    radial-gradient(50% 70% at 88% 20%, rgba(224,121,143,.22), transparent 60%);
-  pointer-events:none;
-}
-.hero .wrap{position:relative;z-index:1}
-.hero .tag{
-  display:inline-block; font-size:12px; letter-spacing:.14em; text-transform:uppercase;
-  padding:5px 13px; border-radius:99px; background:rgba(255,255,255,.14);
-  border:1px solid rgba(255,255,255,.22); margin-bottom:18px;
-}
-.hero h1{font-size:34px;line-height:1.3;font-weight:650;letter-spacing:-.4px;margin-bottom:12px}
-.hero .sub{color:rgba(255,255,255,.72);font-size:15px}
-.hero .meta{margin-top:22px;display:flex;flex-wrap:wrap;gap:26px;font-size:13px;color:rgba(255,255,255,.62)}
-.hero .meta b{color:#fff;font-weight:600}
+> 分析日期：2026-08-29  
+> 仓库：qqxiaochen/webw  
+> 域名：www.paomfz.com  
+> 部署架构：Cloudflare → GitHub Pages (japaneast)
 
-/* ---------- Verdict ---------- */
-.verdict{
-  background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--red);
-  border-radius:var(--radius); padding:22px 26px; margin-bottom:32px;
-}
-.verdict h2{font-size:16px;margin-bottom:12px;color:var(--red);letter-spacing:.02em}
-.verdict p{color:var(--ink-2);font-size:14.5px}
-.verdict p+p{margin-top:10px}
-.verdict code{background:var(--line-2);padding:2px 7px;border-radius:5px;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace}
+---
 
-/* ---------- KPI ---------- */
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:14px;margin-bottom:36px}
-.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
-.kpi .n{font-size:27px;font-weight:680;letter-spacing:-.5px;line-height:1.2}
-.kpi .l{font-size:12.5px;color:var(--ink-3);margin-top:5px}
-.kpi .h{font-size:11.5px;color:var(--ink-3);margin-top:7px;padding-top:7px;border-top:1px solid var(--line-2)}
-.kpi.good .n{color:var(--green)} .kpi.bad .n{color:var(--red)}
-.kpi.warn .n{color:var(--amber)} .kpi.info .n{color:var(--blue)}
+## 一、项目概览
 
-/* ---------- Section ---------- */
-section{margin-bottom:40px;scroll-margin-top:20px}
-h2.sec{
-  font-size:20px;font-weight:640;letter-spacing:-.2px;margin-bottom:6px;
-  display:flex;align-items:center;gap:11px;
-}
-h2.sec .num{
-  width:26px;height:26px;flex:none;border-radius:8px;background:var(--ink);color:#fff;
-  font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;
-}
-.sec-desc{color:var(--ink-3);font-size:13.5px;margin-bottom:18px;padding-left:37px}
-h3{font-size:15.5px;font-weight:620;margin:24px 0 10px;color:var(--ink)}
-p{color:var(--ink-2);font-size:14.5px}
-p+p{margin-top:11px}
+**PaoMian Hax（泡面辅助）** 是一个 CrossFire（穿越火线）游戏第三方辅助工具的官方网站，提供越南服 (VN)、欧美服 (WE)、菲律宾服 (PH) 的游戏辅助下载服务。
 
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;margin-bottom:16px}
-.panel.tight{padding:16px 18px}
+### 技术栈
+- **前端**：纯 HTML + CSS + JS，无任何外部依赖（无 jQuery、无 UI 框架）
+- **设计系统**：CSS Variables 设计令牌，深色磨砂玻璃风格
+- **视觉语言**：v6 深色磨砂玻璃（visionOS/macOS Liquid Glass 风格）
+- **部署**：GitHub Pages + Cloudflare 反向代理
+- **CI/CD**：GitHub Actions 自动部署到 github.io 镜像
 
-/* ---------- Table ---------- */
-table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0}
-th{
-  text-align:left;padding:10px 12px;background:#f2f4f8;color:var(--ink-2);
-  font-weight:600;font-size:12.5px;border-bottom:1px solid var(--line);white-space:nowrap;
-}
-td{padding:10px 12px;border-bottom:1px solid var(--line-2);color:var(--ink-2);vertical-align:top}
-tr:last-child td{border-bottom:none}
-td code,th code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:var(--line-2);padding:1.5px 6px;border-radius:4px;word-break:break-all}
-.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
+### 文件结构
+```
+webw/
+├── index.html          # 首页（35KB，自包含单文件）
+├── download.html       # 下载页（29KB）
+├── 404.html           # 404 错误页（19KB）
+├── CNAME              # www.paomfz.com
+├── down/              # 下载文件（130MB）
+│   ├── ph/            # 菲律宾服
+│   │   ├── 7A638484.zip  # 死文件（31MB）
+│   │   └── 9D759C3.zip   # 在用 ✅
+│   └── speed/         # 加速器等（39MB）
+│       ├── gytidj.zip    # 重复死文件
+│       └── PaoMian*.zip  # 重复死文件
+└── static/
+    ├── favicon.ico    # 图标 ✅
+    ├── music.mp3      # 背景音乐 ✅
+    └── images/        # 13 个零引用图片（~825KB）
+```
 
-/* ---------- Badges ---------- */
-.b{display:inline-block;padding:2px 9px;border-radius:6px;font-size:11.5px;font-weight:600;white-space:nowrap;line-height:1.7}
-.b-ok{background:var(--green-bg);color:var(--green)}
-.b-err{background:var(--red-bg);color:var(--red)}
-.b-warn{background:var(--amber-bg);color:var(--amber)}
-.b-info{background:var(--blue-bg);color:var(--blue)}
-.b-p{background:var(--purple-bg);color:var(--purple)}
-.b-grey{background:#f0f2f6;color:var(--ink-3)}
+---
 
-/* ---------- Callout ---------- */
-.callout{border-radius:10px;padding:15px 18px;margin:14px 0;font-size:14px;line-height:1.7}
-.c-red{background:var(--red-bg);border-left:3px solid var(--red)}
-.c-amber{background:var(--amber-bg);border-left:3px solid var(--amber)}
-.c-green{background:var(--green-bg);border-left:3px solid var(--green)}
-.c-blue{background:var(--blue-bg);border-left:3px solid var(--blue)}
-.c-purple{background:var(--purple-bg);border-left:3px solid var(--purple)}
-.callout b{color:var(--ink)}
+## 二、部署架构分析
 
-/* ---------- Code ---------- */
-pre{
-  background:#1c2130;color:#d8dced;padding:15px 18px;border-radius:10px;overflow-x:auto;
-  font:12.5px/1.7 ui-monospace,Menlo,Consolas,monospace;margin:12px 0;
-}
-pre .c{color:#7a8296}
-pre .k{color:#e0798f}
-pre .s{color:#9fd68a}
-pre .hl{color:#ffd479;font-weight:600}
+### 线上链路（已验证）
+```
+用户请求 → Cloudflare (172.66.40.151, HKG) → GitHub Pages (Fastly · japaneast)
+```
 
-/* ---------- Arch diagram ---------- */
-.arch{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:18px 0}
-.arch-node{
-  flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);
-  border-radius:12px;padding:16px;text-align:center;position:relative;
-}
-.arch-node .t{font-size:13.5px;font-weight:620;margin-bottom:5px}
-.arch-node .d{font-size:11.5px;color:var(--ink-3);line-height:1.6}
-.arch-node.hi{border-color:var(--blue);background:var(--blue-bg)}
-.arch-node.bad{border-color:var(--red);background:var(--red-bg)}
-.arch-arrow{
-  flex:0 0 46px;display:flex;align-items:center;justify-content:center;
-  color:var(--ink-3);font-size:19px;
-}
-@media(max-width:700px){.arch-arrow{flex-basis:100%;height:34px;transform:rotate(90deg)}}
+**技术证据**：
+- `X-GitHub-Request-Id` header → GitHub Pages 特征
+- `x-github-edge-region: uksouth` → GitHub Edge
+- `Via: 1.1 varnish` → GitHub Pages CDN
+- `X-Served-By: cache-sin-*` → Fastly 边缘节点
+- `X-Fastly-Request-ID` → Fastly CDN
+- `Server: cloudflare` → Cloudflare 作为反向代理层
 
-/* ---------- Bar ---------- */
-.bars{margin:14px 0}
-.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:9px;font-size:13px}
-.bar-row .lab{flex:0 0 210px;color:var(--ink-2);font-size:12.5px}
-.bar-track{flex:1;height:22px;background:#f0f2f6;border-radius:5px;overflow:hidden;position:relative}
-.bar-fill{height:100%;border-radius:5px;display:flex;align-items:center;padding-left:9px;color:#fff;font-size:11.5px;font-weight:600}
-.bar-val{flex:0 0 78px;text-align:right;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--ink-2)}
+### Cloudflare 角色
+- DNS 管理
+- CDN 加速
+- DDoS 防护
+- **纯反向代理层**，无独立站点副本
 
-/* ---------- List ---------- */
-ul.li,ol.li{margin:11px 0 11px 20px;color:var(--ink-2);font-size:14.5px}
-ul.li li,ol.li li{margin-bottom:7px;padding-left:3px}
-ul.li li::marker{color:var(--ink-3)}
+### GitHub Actions 部署流程
+```yaml
+触发：push to main / workflow_dispatch
+步骤：
+  1. checkout
+  2. configure-pages
+  3. rm -f CNAME        # ⚠️ 危险操作（详见 P0）
+  4. upload-artifact
+  5. deploy-pages
+```
 
-/* ---------- Fix ---------- */
-.fix{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
-.fix-h{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:11px;flex-wrap:wrap}
-.fix-h .t{font-size:15px;font-weight:620;flex:1;min-width:200px}
-.fix-b{padding:18px 20px}
-.fix-b p{font-size:14px}
-.effort{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
+### 实测部署状态
+- 最近提交：`cbfaaef`（今日 14:54）
+- 首页响应：`200 OK`，`Age: 0`，`X-Cache: MISS` → 缓存未命中，刚从 GitHub 拉取
+- WE 下载：✅ 正常（30MB，HTTP 200）
+- VN 下载：⚠️ **404 死链**（文件不存在于服务器）
 
-/* ---------- TOC ---------- */
-.toc{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 22px;margin-bottom:32px}
-.toc-t{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);margin-bottom:10px;font-weight:600}
-.toc ol{list-style:none;counter-reset:t;margin:0}
-.toc li{counter-increment:t;margin-bottom:5px;font-size:13.5px}
-.toc li::before{content:counter(t,decimal-leading-zero);color:var(--ink-3);font-family:ui-monospace,monospace;margin-right:9px;font-size:12px}
-.toc a{color:var(--ink-2);text-decoration:none}
-.toc a:hover{color:var(--blue)}
+---
 
-footer.rpt{margin-top:48px;padding-top:22px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px;text-align:center}
-</style>
-</head>
-<body>
+## 三、代码质量分析
 
-<div class="hero">
-  <div class="wrap">
-    <span class="tag">Deep Analysis · v3</span>
-    <h1>PaoMian Hax 项目深度分析报告</h1>
-    <p class="sub">部署架构实测纠偏 · 发布链路诊断 · 死链审计 · 仓库健康度 · 代码与合规</p>
-    <div class="meta">
-      <span>生成时间 <b>2026-08-29 15:0x</b></span>
-      <span>仓库 <b>qqxiaochen/webw</b></span>
-      <span>HEAD <b>4d7bb0b</b></span>
-      <span>站点 <b>www.paomfz.com</b></span>
-    </div>
-  </div>
-</div>
+### 3.1 P0 严重问题
 
-<div class="wrap">
-
-<!-- ============ TOC ============ -->
-<div class="toc">
-  <div class="toc-t">目录</div>
-  <ol>
-    <li><a href="#s1">执行摘要</a></li>
-    <li><a href="#s2">部署架构真相 —— 推翻 08-27 结论</a></li>
-    <li><a href="#s3">发布链路诊断：链路是通的</a></li>
-    <li><a href="#s4">线上实测与死链审计</a></li>
-    <li><a href="#s5">仓库健康度：1.5GB 从哪来</a></li>
-    <li><a href="#s6">代码质量审计</a></li>
-    <li><a href="#s7">安全与合规</a></li>
-    <li><a href="#s8">性能与 SEO</a></li>
-    <li><a href="#s9">修复路线图 P0 / P1 / P2</a></li>
-  </ol>
-</div>
-
-<!-- ============ 1. 执行摘要 ============ -->
-<section id="s1">
-  <h2 class="sec"><span class="num">1</span>执行摘要</h2>
-  <p class="sec-desc">先给结论，再给证据。</p>
-
-  <div class="verdict">
-    <h2>⚠ 最重要的三件事</h2>
-    <p><b>1. 之前的部署结论是错的。</b>08-27 的 v2 报告判定站点托管在 <b>Cloudflare Pages</b>。本次实测响应头中出现 <code>X-GitHub-Request-Id</code>、<code>x-github-edge-region: japaneast</code>、<code>X-Fastly-Request-ID</code> —— 这三项是 <b>GitHub Pages</b> 的独有特征。真相是：Cloudflare 仅作 DNS + 反向代理，<b>真正的源站是 GitHub Pages</b>。</p>
-    <p><b>2. 由此产生一个 P0 定时炸弹。</b>CI 工作流 <code>deploy-pages.yml</code> 里有一行 <code>rm -f CNAME</code>，动机是"只部署到 github.io、保留 Cloudflare 上的主站"。但主站本身就在 GitHub Pages 上 —— 这个前提不存在。每次部署都在删除自定义域名的凭证文件，目前没炸只是因为域名绑定持久化在 GitHub 服务端，一旦触发重校验，全站自定义域名即失效。</p>
-    <p><b>3. VN 下载是 100% 死链。</b><code>download.html</code> 首卡 VN 的主按钮指向 <code>/down/vn/PaoMianHax-Vn-211103-2(Pass123).zip</code>，线上实测 <b>404</b>，本地 <code>down/</code> 下<b>根本不存在 vn 目录</b>。这不是网络波动，是结构性缺文件。三服下载入口里挂了一个，且是排在第一位的那个。</p>
-  </div>
-
-  <div class="kpis">
-    <div class="kpi bad"><div class="n">1</div><div class="l">死链下载入口<br>（VN 服 · 排首位）</div><div class="h">线上 404 确认</div></div>
-    <div class="kpi bad"><div class="n">69 MB</div><div class="l">下死重文件<br>（页面零入口）</div><div class="h">占 down/ 的 53%</div></div>
-    <div class="kpi bad"><div class="n">1.5 GB</div><div class="l">.git 体积<br>（0 个 packfile）</div><div class="h">99% 是 ZIP 历史</div></div>
-    <div class="kpi warn"><div class="n">0</div><div class="l">安全响应头<br>（HSTS/CSP/XFO）</div><div class="h">Cloudflare 未配置</div></div>
-    <div class="kpi warn"><div class="n">10</div><div class="l">缺 rel 的外链<br><code>target=_blank</code></div><div class="h">tabnabbing 风险</div></div>
-    <div class="kpi good"><div class="n">≈9 KB</div><div class="l">首页 gzip 后体积</div><div class="h">零外部依赖</div></div>
-  </div>
-
-  <div class="callout c-green">
-    <b>值得肯定的部分：</b>三页全部为自包含单文件（HTML + 内联 CSS + 内联 JS，零外部依赖），无 jQuery / UIkit 遗留；SEO 元信息（canonical / OG / Twitter Card / description / lang）已补齐；音乐改为懒加载默认关闭；<b>发布链路实际是通畅的</b> —— 详见第 3 节，此前判定的"发布漂移"是误判。
-  </div>
-</section>
-
-<!-- ============ 2. 架构真相 ============ -->
-<section id="s2">
-  <h2 class="sec"><span class="num">2</span>部署架构真相 —— 推翻 08-27 结论</h2>
-  <p class="sec-desc">这一节修正项目记忆里的错误结论，是全报告最关键的一节。</p>
-
-  <h3>实测响应头（2026-08-29 14:58）</h3>
-  <pre><span class="c">$ curl -sI https://www.paomfz.com/</span>
-HTTP/1.1 200 OK
-Date:            Sat, 29 Aug 2026 06:58:16 GMT
-<span class="hl">Server:          cloudflare</span>
-<span class="hl">X-GitHub-Request-Id: 189C:1C310:1461AF:15C01A:6A9283D7</span>
-<span class="hl">x-github-edge-region: japaneast</span>
-Age:             409
-<span class="hl">Via:             1.1 varnish</span>
-<span class="hl">X-Served-By:     cache-nrt-rjtf7700071-NRT</span>
-<span class="hl">X-Cache:         HIT</span>
-<span class="hl">X-Fastly-Request-ID: 46eb5704f562807baa977a000c7953a93740beb3</span>
-CF-RAY:          a329afa3cd2120f0-HKG
-Last-Modified:   Thu, 27 Aug 2026 13:44:07 GMT
-Cache-Control:   max-age=600</pre>
-
-  <p>关键判据：<code>Varnish + Fastly + X-GitHub-Request-Id + x-github-edge-region</code> 这套组合只有 GitHub Pages 会同时出现。Cloudflare Pages 的响应头会带 <code>cf-cache-status</code> 与 <code>CF-RAY</code>，但<b>绝不会</b>带 GitHub 的请求 ID 和 Fastly 的东京边缘节点信息。<code>X-Served-By: cache-nrt-...</code> 中的 <code>nrt</code> = 成田（Narita），正是 GitHub Pages 的 japaneast 边缘。</p>
-
-  <div class="arch">
-    <div class="arch-node">
-      <div class="t">用户</div>
-      <div class="d">全球访问</div>
-    </div>
-    <div class="arch-arrow">→</div>
-    <div class="arch-node hi">
-      <div class="t">Cloudflare</div>
-      <div class="d">DNS 代理 + CDN<br>CF-RAY: HKG<br>172.66.40.151</div>
-    </div>
-    <div class="arch-arrow">→</div>
-    <div class="arch-node hi">
-      <div class="t">GitHub Pages</div>
-      <div class="d">真正的源站<br>Fastly · japaneast<br>qqxiaochen/webw</div>
-    </div>
-  </div>
-
-  <div class="callout c-red">
-    <b>矛盾点：</b>工作流注释写着"镜像模式：仅部署到 *.github.io，保留 Cloudflare 上的 www.paomfz.com"—— 这句话描述的架构<b>不存在</b>。Cloudflare 上没有独立的站点副本，它只是一个转发层。
-  </div>
-
-  <h3>P0 风险：<code>rm -f CNAME</code></h3>
-  <pre><span class="c"># .github/workflows/deploy-pages.yml</span>
-<span class="c"># 镜像模式：仅部署到 *.github.io，保留 Cloudflare 上的 www.paomfz.com</span>
-<span class="c"># 移除 CNAME 文件，避免 GitHub Pages 尝试绑定自定义域名</span>
+#### 🔴 P0-1: CI 删除 CNAME 文件（致命隐患）
+**位置**：`.github/workflows/deploy-pages.yml:19`
+```yaml
 - name: Exclude custom domain (mirror on github.io only)
-  <span class="k">run</span>: <span class="s">rm -f CNAME</span>   <span class="c">← 每次部署都执行</span></pre>
+  run: rm -f CNAME
+```
+**问题**：注释称"仅部署 github.io、保留 Cloudflare 主站"，但 Cloudflare 主站和 github.io 是**同一套 GitHub Pages 资源**。每次部署都会删除 CNAME，可能导致：
+1. GitHub Pages 自动绑定 `*.github.io` 默认域名
+2. CNAME 丢失后 Cloudflare 解析可能失效
+3. 全站 404
 
-  <p>仓库根目录确实提交了 <code>CNAME</code>（内容 <code>www.paomfz.com</code>，无结尾换行）。GitHub Pages 的自定义域名绑定有两种来源：仓库里的 <code>CNAME</code> 文件，或 Settings 里的手动配置。目前域名能访问，说明绑定是持久化的服务端配置；但只要 GitHub 哪次重新以仓库文件为准做校验，把 artifact 里的 CNAME 删掉就会直接导致自定义域名解绑，<b>www.paomfz.com 全站 404</b>。</p>
-  <p>更直接的证据：如果这套"镜像"设计真按预期工作，那么 <code>www.paomfz.com</code> 应该完全不经过 GitHub Pages —— 但它的响应头里全是 GitHub Pages 的特征。设计意图与实际情况已经完全脱节。</p>
-</section>
+**建议**：移除该步骤，或改用 GitHub Pages 的高级配置（Settings → Pages → Custom domain）
 
-<!-- ============ 3. 发布链路 ============ -->
-<section id="s3">
-  <h2 class="sec"><span class="num">3</span>发布链路诊断：链路是通的</h2>
-  <p class="sec-desc">此前记录的"git 与线上存在发布漂移（P0）"—— 本次复核后判定为误报。</p>
+---
 
-  <h3>时间线闭环</h3>
-  <table>
-    <tr><th style="width:150px">时间</th><th style="width:200px">事件</th><th>说明</th></tr>
-    <tr><td class="mono">08-27 21:43:08</td><td><span class="b b-grey">commit</span> <code>4d7bb0b</code></td><td>最新一次提交（仅新增 <code>.workbuddy/tmp/404-verify-en.html</code>）</td></tr>
-    <tr><td class="mono">08-27 21:44:07</td><td><span class="b b-ok">deploy</span> 线上 Last-Modified</td><td class="mono">Thu, 27 Aug 2026 13:44:07 GMT（UTC）= 本地 21:44</td></tr>
-    <tr><td class="mono">08-28 18:17</td><td><span class="b b-warn">改版</span> v4 Editorial</td><td>三页改版，<b>从未 commit</b>，仅存在于工作区</td></tr>
-    <tr><td class="mono">08-29 14:54</td><td><span class="b b-info">回退</span> 撤销 v4</td><td>从 <code>*.bak-20260828</code> 还原，内容 ≡ <code>a5ecca3</code></td></tr>
-  </table>
+#### 🔴 P0-2: VN 下载死链
+**位置**：`download.html:418`
+```html
+href="https://www.paomfz.com/down/vn/PaoMianHax-Vn-211103-2(Pass123).zip"
+```
+**实测**：HTTP 404，本地无 `down/vn/` 目录  
+**状态标记**：显示 "Updating" → 可能是开发者已知问题但未修复  
+**建议**：移除 VN 卡片或更新链接
 
-  <div class="callout c-green">
-    <b>结论：</b>CI 在提交后 <b>59 秒</b>完成部署，链路健康。8-28 的 v4 改版从始至终没有进入版本历史，自然也没推送到远端，"本地改了线上没变"是<b>没提交</b>造成的，不是发布管道故障。<br>
-    当前本地三页 ≡ git HEAD <code>a5ecca3</code> ≡ 线上版本，<b>三者已重新对齐</b>。此前登记的 P0「发布漂移」可以撤销。
-  </div>
+---
 
-  <div class="callout c-amber">
-    <b>但有一个新的隐患：</b>8-28 至 8-29 期间，工作区存在未提交的重大视觉改版长达 20 小时。若当时误执行 <code>git checkout .</code> 或 <code>git stash</code>，改版将全部丢失且无版本记录。改版类 작업 建议先建分支或至少先 commit 一个 WIP。
-  </div>
-</section>
+### 3.2 P1 重要问题
 
-<!-- ============ 4. 死链审计 ============ -->
-<section id="s4">
-  <h2 class="sec"><span class="num">4</span>线上实测与死链审计</h2>
-  <p class="sec-desc">2026-08-29 实测全部公开 URL。<code>000</code> = 连接超时，从中国大陆网络环境测得，不代表资源不存在。</p>
+#### 🟠 P1-1: 安全属性缺失
+10 个 `target="_blank"` 缺少 `rel="noopener noreferrer"`：
+- `index.html`：6 处（购买链接、Discord、Telegram、SmileGate）
+- `download.html`：4 处（3 个下载链接 + SmileGate）
 
-  <table>
-    <tr><th style="width:80px">状态</th><th>URL</th><th style="width:290px">判定</th></tr>
-    <tr><td><span class="b b-ok">206</span></td><td class="mono">/</td><td>首页正常（Range 请求）</td></tr>
-    <tr><td><span class="b b-ok">206</span></td><td class="mono">/download.html</td><td>下载页正常</td></tr>
-    <tr><td><span class="b b-err">404</span></td><td class="mono">/down/vn/PaoMianHax-Vn-211103-2(Pass123).zip</td><td><b>死链</b> — 本地无 <code>down/vn/</code> 目录</td></tr>
-    <tr><td><span class="b b-ok">206</span></td><td class="mono">/down/we/5C72CA.zip</td><td>正常 · 29.1 MB</td></tr>
-    <tr><td><span class="b b-ok">206</span></td><td class="mono">/down/ph/9D759C3.zip</td><td>正常 · 31.1 MB</td></tr>
-    <tr><td><span class="b b-grey">000</span></td><td class="mono">/down/ph/7A638484.zip</td><td>超时（网络）· 页面<b>无入口</b> → 死文件</td></tr>
-    <tr><td><span class="b b-grey">000</span></td><td class="mono">/down/speed/PaoMianJiasu.zip</td><td>超时（网络）· 页面<b>无入口</b> → 死文件</td></tr>
-    <tr><td><span class="b b-ok">206</span></td><td class="mono">/static/music.mp3</td><td>正常 · 3.1 MB（懒加载）</td></tr>
-    <tr><td><span class="b b-ok">206</span></td><td class="mono">/baidu_verify_vjqHMTOxEG.html</td><td>百度站长验证文件在位</td></tr>
-    <tr><td><span class="b b-ok">206</span></td><td class="mono">/googleedb8ea84a40e936d.html</td><td>Google 验证文件在位</td></tr>
-    <tr><td><span class="b b-grey">000</span></td><td class="mono">/robots.txt</td><td>无响应，本地也无此文件</td></tr>
-    <tr><td><span class="b b-grey">000</span></td><td class="mono">/sitemap.xml</td><td>无响应，本地也无此文件</td></tr>
-    <tr><td><span class="b b-err">404</span></td><td class="mono">/404-verify-en.html</td><td>符合预期 — 该文件在 <code>.workbuddy/tmp/</code> 下，非站点文件</td></tr>
-    <tr><td><span class="b b-grey">000</span></td><td class="mono">qqxiaochen.github.io/webw/</td><td>github.io 域名在国内不可达</td></tr>
-  </table>
+**风险**：新标签页可访问 `window.opener`，可能导致页面劫持
 
-  <h3>死文件清单</h3>
-  <div class="bars">
-    <div class="bar-row"><div class="lab">down/ph/7A638484.zip</div><div class="bar-track"><div class="bar-fill" style="width:45%;background:var(--red)">31.0 MB</div></div><div class="bar-val">死文件</div></div>
-    <div class="bar-row"><div class="lab">down/speed/PaoMianJiasu.zip</div><div class="bar-track"><div class="bar-fill" style="width:18.4%;background:var(--red)">12.7 MB</div></div><div class="bar-val">死文件</div></div>
-    <div class="bar-row"><div class="lab">down/speed/PaoMianAccelerator.zip</div><div class="bar-track"><div class="bar-fill" style="width:18.4%;background:var(--red)">12.7 MB</div></div><div class="bar-val">死文件</div></div>
-    <div class="bar-row"><div class="lab">down/speed/gytidj.zip</div><div class="bar-track"><div class="bar-fill" style="width:18.4%;background:var(--red)">12.7 MB</div></div><div class="bar-val">死文件</div></div>
-    <div class="bar-row"><div class="lab">down/ph/9D759C3.zip</div><div class="bar-track"><div class="bar-fill" style="width:45%;background:var(--green)">31.1 MB</div></div><div class="bar-val">✓ 在用</div></div>
-    <div class="bar-row"><div class="lab">down/we/5C72CA.zip</div><div class="bar-track"><div class="bar-fill" style="width:42%;background:var(--green)">29.1 MB</div></div><div class="bar-val">✓ 在用</div></div>
-  </div>
+---
 
-  <div class="callout c-red">
-    <b>down/ 目录 129.3 MB，其中 69.1 MB（53%）是页面零入口的死文件。</b>这些文件同时被 git 跟踪，是 1.5GB 仓库体积的主要贡献者之一。<code>speed/</code> 下三个文件体积完全一致（12.7 MB × 3），是历史加速器包的三份残留。
-  </div>
+#### 🟠 P1-2: 冗余/死文件占用 169MB
+| 文件/目录 | 大小 | 状态 |
+|-----------|------|------|
+| `down/ph/7A638484.zip` | 31MB | 死文件（无链接引用） |
+| `down/speed/` × 3 个 ZIP | 39MB | 重复死文件（完全相同） |
+| `static/images/` × 13 个文件 | ~825KB | 全部零引用 |
 
-  <div class="callout c-amber">
-    <b>static/images/ 共 13 个文件，全部零引用</b>（约 785 KB）：<code>bg.jpg</code>(374K) <code>bg.zip</code>(182K) <code>crossfire.png</code>(95K) <code>Logo1.png</code>(47K) <code>logo.svg</code>(34K) <code>download.png</code>(19K) <code>icons.png</code>(13K) <code>logo01.png</code>(8K) <code>PanDownload.png</code>(4K) <code>SpeedPan.png</code>(4K) <code>icon_cloud.png</code>(1.4K) <code>log_bg.png</code>(1K) <code>logo.zip</code>(2.4K)。<code>static/</code> 下实际在用的只有 <code>music.mp3</code> 和 <code>favicon.ico</code>。
-  </div>
-</section>
+**建议**：清理死文件，减少仓库体积
 
-<!-- ============ 5. 仓库健康度 ============ -->
-<section id="s5">
-  <h2 class="sec"><span class="num">5</span>仓库健康度：1.5 GB 从哪来</h2>
-  <p class="sec-desc">74 次提交，9 个站点文件，1.5 GB 的 .git。</p>
+---
 
-  <pre><span class="c">$ git count-objects -vH</span>
-count: <span class="hl">433</span>
-size:  <span class="hl">1.40 GiB</span>
-<span class="k">in-pack: 0</span>          <span class="c">← 从未 git gc，没有 packfile</span>
-<span class="k">packs:   0</span></pre>
+#### 🟠 P1-3: 404.html 标准问题
+```html
+<!-- 缺少 DOCTYPE -->
+<html lang="en">  <!-- 但正文是中文 -->
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=0">  <!-- 禁用缩放 -->
+```
 
-  <p>433 个 loose object 撑到 1.40 GiB，说明几乎每个对象都是几十 MB 的 ZIP。历史最大 blob：</p>
+**问题**：
+1. 缺 `<!DOCTYPE html>` → 可能触发 quirks mode
+2. `lang="en"` 与中文内容不一致
+3. viewport 禁用缩放 → 移动端访问体验差
 
-  <table>
-    <tr><th style="width:110px">体积</th><th>路径</th><th style="width:150px">当前是否在用</th></tr>
-    <tr><td class="mono">31.6 MB</td><td class="mono">down/ph/A6B90B.zip</td><td><span class="b b-err">已删除</span></td></tr>
-    <tr><td class="mono">31.3 MB</td><td class="mono">down/ph/76C49E3655.zip</td><td><span class="b b-err">已删除</span></td></tr>
-    <tr><td class="mono">31.3 MB</td><td class="mono">down/ph/CC378C9.zip</td><td><span class="b b-err">已删除</span></td></tr>
-    <tr><td class="mono">31.3 MB</td><td class="mono">down/ph/F2868F12CB.zip</td><td><span class="b b-err">已删除</span></td></tr>
-    <tr><td class="mono">31.2 MB</td><td class="mono">down/ph/EE7134D43.zip</td><td><span class="b b-err">已删除</span></td></tr>
-    <tr><td class="mono">31.2 MB</td><td class="mono">down/we/DCA8BA55.zip</td><td><span class="b b-err">已删除</span></td></tr>
-    <tr><td colspan="3" style="padding-top:4px;color:var(--ink-3);font-size:12.5px">…… 历史累计提交过 20+ 个 30 MB 级 ZIP，全部永久保存在 git 对象库里</td></tr>
-  </table>
+---
 
-  <div class="callout c-red">
-    <b>根因：把 30 MB 级的二进制发布包直接提交进 git。</b>每次更新版本就新增一个 31 MB blob，旧版本删除后仍永久留在历史中。git 是为文本设计的，二进制大文件应该用 Git LFS 或完全外置（对象存储 / CDN）。
-  </div>
+#### 🟠 P1-4: download.html 缺 h1
+下载页的标题结构：
+```html
+<header class="dl-head reveal">
+  <span class="dl-head-en">Download Page</span>
+  <p class="dl-head-zh">下载页 · 选择你的伺服器</p>
+</header>
+```
+无语义化 `<h1>`，不利于 SEO 和无障碍访问
 
-  <h3>其他污染</h3>
-  <ul class="li">
-    <li><b><code>.workbuddy/</code> 有 26 个文件被 git 跟踪</b>，包含 <code>reports/</code> 下的 11 MB 截图 PNG、<code>obfuscate.js</code>、<code>shoot.js</code> 等开发产物。这些应该进 <code>.gitignore</code>。</li>
-    <li>当前 <code>.gitignore</code> 只忽略了 <code>.workbuddy/backups/</code> 和 <code>.workbuddy/memory/*.bak*</code>，<code>reports/</code> 与 <code>tmp/</code> 是漏网之鱼。</li>
-    <li><code>74</code> 次提交里绝大多数 message 是「1」—— 无法追溯任何一次变更的意图。</li>
-  </ul>
-</section>
+---
 
-<!-- ============ 6. 代码质量 ============ -->
-<section id="s6">
-  <h2 class="sec"><span class="num">6</span>代码质量审计</h2>
-  <p class="sec-desc">三页均为自包含单文件，零外部 CSS/JS 依赖 —— 架构选择是对的，问题在实现细节。</p>
+#### 🟠 P1-5: index.html keywords 堆砌
+```html
+<meta name="keywords" content="泡面官网,泡面辅助,泡面辅助官网,PaoMian Hax,www.paomfz.com,HACK CF,CFVN VIP CHEAT,CFWEST CHEAT,...">
+```
+20+ 个重复变体关键词，属黑帽 SEO 手法，可能被搜索引擎惩罚
 
-  <table>
-    <tr><th style="width:130px">指标</th><th style="width:110px">index.html</th><th style="width:110px">download.html</th><th style="width:110px">404.html</th></tr>
-    <tr><td>总大小</td><td class="mono">35.7 KB</td><td class="mono">29.2 KB</td><td class="mono">18.7 KB</td></tr>
-    <tr><td>CSS 占比</td><td class="mono">20 KB · 57%</td><td class="mono">16 KB · 58%</td><td class="mono">18 KB · 98%</td></tr>
-    <tr><td>JS 占比</td><td class="mono">3 KB · 11%</td><td class="mono">4 KB · 16%</td><td class="mono">4 KB · 24%</td></tr>
-    <tr><td>gzip 后（估）</td><td class="mono">≈ 9.3 KB</td><td class="mono">≈ 7.6 KB</td><td class="mono">≈ 4.9 KB</td></tr>
-    <tr><td>外部依赖</td><td><span class="b b-ok">0</span></td><td><span class="b b-ok">0</span></td><td><span class="b b-ok">0</span></td></tr>
-    <tr><td>DOCTYPE</td><td><span class="b b-ok">有</span></td><td><span class="b b-ok">有</span></td><td><span class="b b-err">缺失</span></td></tr>
-    <tr><td>UTF-8 BOM</td><td><span class="b b-warn">有</span></td><td><span class="b b-warn">有</span></td><td><span class="b b-warn">有</span></td></tr>
-    <tr><td>backdrop-filter</td><td class="mono">16 处</td><td class="mono">16 处</td><td class="mono">10 处</td></tr>
-  </table>
+---
 
-  <h3>缺陷清单</h3>
+### 3.3 P2 优化建议
 
-  <div class="panel tight">
-    <p><span class="b b-err">BUG</span> <b>404.html 缺少 <code>&lt;!DOCTYPE html&gt;</code></b> —— 三页中唯一没有的。浏览器会以 quirks mode 渲染，盒模型、行高、字体继承都可能出现偏差。这个页面是 GitHub Pages 的自定义 404 页，所有走错 URL 的用户都会看到它。</p>
-  </div>
+#### 🟡 P2-1: CSS 高度重复
+- `index.html` 和 `download.html` 共享约 60% CSS（设计令牌、导航、按钮、玻璃效果）
+- 建议抽取为 `static/site.css` 统一维护
 
-  <div class="panel tight">
-    <p><span class="b b-err">A11Y</span> <b>404.html 的 viewport 禁用缩放</b>：<code>maximum-scale=1, minimum-scale=1, user-scalable=0</code>。违反 WCAG 1.4.4（可调整文本大小），且 index / download 两页都是标准写法 —— 三页不一致。404 页面的用户往往是视障或误输入的，最不该禁用缩放。</p>
-  </div>
+#### 🟡 P2-2: 三页视觉不一致
+- `index.html` 和 `download.html`：v6 深色磨砂玻璃
+- `404.html`：**浅色 Apple Liquid Glass**（完全不同的设计语言）
+- 建议统一视觉风格
 
-  <div class="panel tight">
-    <p><span class="b b-warn">A11Y</span> <b>404.html 声明 <code>lang="en"</code> 但正文是中文</b>（"网页找不到惹 ╥﹏╥..."）。屏幕阅读器会用英语语音引擎读中文，输出不可辨识。</p>
-  </div>
+#### 🟡 P2-3: 支付渠道合规风险
+- 页脚声明："(Except China)"
+- 支付链接：`mall.909net.cn`（境内域名）
+- **矛盾**：对外声明排除中国，实际使用中国支付渠道
 
-  <div class="panel tight">
-    <p><span class="b b-warn">SEO</span> <b>download.html 没有 <code>&lt;h1&gt;</code></b>，标题层级从 h3 直接开始（4 个 <code>&lt;h3&gt;</code> 是三张下载卡的标题）。index.html 有 1 个 h1 + 2 个 h2 + 5 个 h3，结构正常。下载页是转化核心页，缺 h1 会让搜索引擎难以判断页面主题。</p>
-  </div>
+#### 🟡 P2-4: git 提交信息质量
+所有提交信息为 "1"，无法追溯变更意图。建议：
+- 使用 conventional commits（如 `fix: 修复 VN 死链`）
+- 或至少描述变更内容
 
-  <div class="panel tight">
-    <p><span class="b b-err">SEC</span> <b>10 个 <code>target="_blank"</code> 全部缺少 <code>rel="noopener noreferrer"</code></b>（index 6 个 + download 4 个）。新开页面可通过 <code>window.opener</code> 反向操控原页面（tabnabbing），同时会泄漏 referrer。涉及 Discord / Telegram / YouTube / 支付站外链。</p>
-  </div>
+#### 🟡 P2-5: .gitignore 遗漏
+```
+# 未忽略
+.workbuddy/          # 26 个文件被跟踪
+.github/             # CI 工作流被跟踪
+reports/             # 分析报告被跟踪
+```
 
-  <div class="panel tight">
-    <p><span class="b b-warn">一致性</span> <b>页脚地域声明不一致</b>：download.html 写 "PaoMian Hax is a team that since 2099 brings quality services in various areas. <b>(Except China)</b>"，index.html 同一句话<b>没有</b> "(Except China)"。同一套页脚两种版本。</p>
-  </div>
+---
 
-  <div class="panel tight">
-    <p><span class="b b-info">SEO</span> <b><code>keywords</code> meta 仍是黑帽堆砌</b>：index.html 里塞了 20+ 个重复变体（<code>CFWE HACK</code> 出现 3 次、<code>HACK CF</code> 2 次…）。Google 自 2009 年起完全忽略 keywords，百度也早已降权。这段对排名<b>零贡献</b>，反而是明显的垃圾信号，建议直接删除。</p>
-  </div>
+## 四、安全分析
 
-  <div class="panel tight">
-    <p><span class="b b-info">维护</span> <b>三页 CSS 高度重复</b>：导航系统、玻璃质感（backdrop-filter / 渐变描边 / 高光）、按钮组、modal、footer、reveal 动画在两个页面里各写了一遍。download.html 相对 index.html 至少有 60% 的 CSS 是复制粘贴。改一处要改两处 —— 8-28 改版 + 8-29 回退之所以要动三个文件、备份六份，根源就在这里。</p>
-  </div>
+### 4.1 缺失的安全响应头
+```
+❌ Strict-Transport-Security (HSTS)
+❌ Content-Security-Policy (CSP)
+❌ X-Frame-Options
+❌ X-Content-Type-Options
+❌ Referrer-Policy
+```
 
-  <div class="panel tight">
-    <p><span class="b b-grey">细节</span> <b>404.html 仍用 <code>xlink:href</code></b> 引用 SVG symbol。SVG2 已废弃该属性（改用 <code>href</code>），现代浏览器虽仍兼容，但属技术债。另外 404.html 的 favicon 用绝对路径 <code>/favicon.ico</code>，另两页用相对路径 <code>static/favicon.ico</code> —— 两种写法都能工作，但不一致。</p>
-  </div>
-</section>
+**风险**：中间人攻击、点击劫持、MIME 嗅探
 
-<!-- ============ 7. 安全合规 ============ -->
-<section id="s7">
-  <h2 class="sec"><span class="num">7</span>安全与合规</h2>
-  <p class="sec-desc">静态站点的攻击面很小，但 Cloudflare 层可以零成本补上所有头。</p>
+### 4.2 外部资源引用
+| 资源 | 来源 | 风险 |
+|------|------|------|
+| YouTube embed | `youtube.com/embed/...` | 跟踪脚本 |
+| Discord invite | `discord.com/...` | 第三方服务 |
+| Telegram invite | `t.me/...` | 第三方服务 |
+| SmileGate | `smilegate.com` | 游戏厂商 |
 
-  <h3>缺失的响应头</h3>
-  <table>
-    <tr><th style="width:220px">响应头</th><th style="width:90px">状态</th><th>影响</th></tr>
-    <tr><td class="mono">Strict-Transport-Security</td><td><span class="b b-err">缺失</span></td><td>首次 HTTP 访问可能被劫持（虽无登录态，风险有限）</td></tr>
-    <tr><td class="mono">Content-Security-Policy</td><td><span class="b b-err">缺失</span></td><td>无法约束内联脚本与外部 iframe（YouTube）的行为</td></tr>
-    <tr><td class="mono">X-Frame-Options</td><td><span class="b b-err">缺失</span></td><td>站点可被任意第三方 iframe 嵌套（点击劫持）</td></tr>
-    <tr><td class="mono">X-Content-Type-Options</td><td><span class="b b-err">缺失</span></td><td>MIME 嗅探风险</td></tr>
-    <tr><td class="mono">Referrer-Policy</td><td><span class="b b-err">缺失</span></td><td>跳往外链时泄漏完整 URL</td></tr>
-  </table>
+**建议**：添加 `referrer-policy` 限制跨域信息泄露
 
-  <p>这五个头在 Cloudflare 上通过 <code>Rules → Response Header Transform</code> 或 <code>_headers</code> 文件配置即可，不需要动代码。<b>注意：GitHub Pages 不支持 <code>_headers</code> 文件</b>（那是 Cloudflare Pages / Netlify 的特性），必须在 Cloudflare 面板里配。</p>
+---
 
-  <h3>合规风险</h3>
-  <div class="callout c-amber">
-    <b>支付渠道与地域声明矛盾。</b>index.html 的店铺按钮指向 <code>mall.909net.cn</code>（<code>.cn</code> 境内域名，第三方发卡平台），另有 <code>pay.paomfz.com</code>。但页脚同时声明 <b>"Except China"</b>。使用境内支付渠道与"不服务中国"的声明并存，逻辑上不能自洽。若确需维持该声明，建议统一改用境外支付渠道；若实际服务中国用户，则应删除该声明 —— 二选一，不能两头都占。
-  </div>
+## 五、SEO 分析
 
-  <div class="callout c-blue">
-    <b>中国大陆可达性：</b>index.html 嵌入了 YouTube iframe（<code>youtube.com/embed/Mr6FaTdi9As</code>），社群入口是 Discord 与 Telegram —— 这三者在中国大陆均不可直接访问。目标用户若含中文用户，视频区会渲染成空白框，两个社群卡片点了也打不开。建议：视频改镜像源或提供备用播放器提示，社群增加 QQ 群 / 微信入口。
-  </div>
-</section>
+### 5.1 Meta 标签完整性
+| 页面 | Title | Description | OG | Canonical | Keywords |
+|------|-------|-------------|----|-----------|----------|
+| index.html | ✅ | ✅ | ✅ | ✅ | ⚠️ 堆砌 |
+| download.html | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 404.html | ❌ 无 meta | ❌ | ❌ | ❌ | ❌ |
 
-<!-- ============ 8. 性能 SEO ============ -->
-<section id="s8">
-  <h2 class="sec"><span class="num">8</span>性能与 SEO</h2>
+### 5.2 结构化数据
+- ❌ 无 Schema.org 标记
+- ❌ 无 JSON-LD
+- ❌ 无 Breadcrumbs
 
-  <h3>性能</h3>
-  <ul class="li">
-    <li><b>文档体积极小</b>：三页 gzip 后 9.3 / 7.6 / 4.9 KB，首屏 HTML 几乎零网络成本。这一点做得很好。</li>
-    <li><b>最大瓶颈是 YouTube iframe</b>：完整播放器脚本 + 相关资源约 1 MB+。已有 <code>loading="lazy"</code>，但进入视口后仍会一次性拉取。建议改为点击后再加载（facade 模式，用静态封面图占位）。</li>
-    <li><b><code>backdrop-filter</code> 密度偏高</b>：index 16 处、download 16 处、404 10 处。这是 GPU 密集型属性，中低端安卓机上滚动会掉帧。当前已有移动端降级策略（blur 值调低），方向正确，建议再评估是否所有元素都需要实时模糊。</li>
-    <li><b>未见 <code>content-encoding</code> 响应头</b>：GitHub Pages 默认会做 gzip/brotli，此处未观测到可能被 Cloudflare 剥离，建议用 WebPageTest 从境外节点复核一次。</li>
-    <li><b>HTTP/2 未能验证</b>：从当前网络环境探测失败，无法确认。Cloudflare 默认开启，实际应该已支持。</li>
-  </ul>
+### 5.3 Sitemap / Robots.txt
+- ❌ 无 `sitemap.xml`
+- ❌ 无 `robots.txt`
 
-  <h3>SEO</h3>
-  <ul class="li">
-    <li><span class="b b-ok">已具备</span> canonical、OG（title/description/type/url/image/locale）、Twitter Card、description、author、robots、<code>lang</code>。这是 08-25 重写后补上的，比原始版本有质的改善。</li>
-    <li><span class="b b-err">缺失</span> <code>sitemap.xml</code> —— 全站仅 3 个页面，手写一份即可，能让搜索引擎完整收录。</li>
-    <li><span class="b b-err">缺失</span> <code>robots.txt</code> —— 建议补充并指向 sitemap。</li>
-    <li><span class="b b-warn">缺陷</span> OG image 用的是 <code>static/favicon.ico</code>（7 KB 的 ico）。社交平台分享时会显示一个极小的图标。建议制作 1200×630 的分享图。</li>
-    <li><span class="b b-warn">缺陷</span> download.html 缺 h1（见 6 节）。</li>
-    <li><span class="b b-warn">冗余</span> keywords 黑帽堆砌（见 6 节）。</li>
-    <li><span class="b b-info">提示</span> 百度与 Google 的站点验证文件均已部署并可通过 URL 访问，说明站长平台已接入 —— 但既然已接入，就更应该补上 sitemap。</li>
-  </ul>
-</section>
+---
 
-<!-- ============ 9. 路线图 ============ -->
-<section id="s9">
-  <h2 class="sec"><span class="num">9</span>修复路线图</h2>
-  <p class="sec-desc">按影响面 × 实施成本排序。P0 建议本周内处理。</p>
+## 六、性能分析
 
-  <h3 style="color:var(--red)">P0 · 立即处理</h3>
+### 6.1 文件体积
+| 资源 | 大小 | 状态 |
+|------|------|------|
+| `index.html` | 35KB | 自包含，无外部请求 |
+| `download.html` | 29KB | 自包含，无外部请求 |
+| `404.html` | 19KB | 自包含，无外部请求 |
+| `static/music.mp3` | 3.1MB | 懒加载，默认关闭 |
+| `static/favicon.ico` | 22KB | 需优化 |
+| `down/we/5C72CA.zip` | 30MB | 用户下载 |
+| `down/ph/9D759C3.zip` | 31MB | 用户下载 |
+| `down/speed/` × 3 | 39MB | 死文件 |
+| `down/ph/7A638484.zip` | 31MB | 死文件 |
 
-  <div class="fix">
-    <div class="fix-h"><span class="b b-err">P0</span><span class="t">修复 VN 下载死链</span><span class="effort">10 分钟</span></div>
-    <div class="fix-b">
-      <p>下载页排第一位的 VN 卡片，主按钮指向一个不存在的文件，本地连 <code>down/vn/</code> 目录都没有。用户点击必然 404。</p>
-      <p>二选一：<b>(a)</b> 补传 VN 包到 <code>down/vn/</code> 并修正文件名；<b>(b)</b> 暂时移除 VN 卡片，只保留 WE / PH 两张。当前卡片状态已标注 "Updating"，走 (b) 在业务上完全说得通，成本也最低。</p>
-      <pre><span class="c">// download.html:431 — 若选 (b)，直接删除整个 &lt;article class="dl-card"&gt; 的 VN 块</span>
-&lt;a href="https://www.paomfz.com/down/vn/PaoMianHax-Vn-211103-2(Pass123).zip"&gt;  <span class="k">← 404</span></pre>
-    </div>
-  </div>
+### 6.2 网络请求
+- 首页：无外部 CSS/JS 请求 ✅
+- 下载页：无外部请求 ✅
+- 404 页：无外部请求 ✅
+- 音乐文件：3.1MB（用户手动加载）⚠️
 
-  <div class="fix">
-    <div class="fix-h"><span class="b b-err">P0</span><span class="t">移除 CI 里的 <code>rm -f CNAME</code></span><span class="effort">5 分钟</span></div>
-    <div class="fix-b">
-      <p>主站就在 GitHub Pages 上，删除 CNAME 是在拆自己的地基。当前没出事是因为域名绑定持久化在服务端，但这是随时可能引爆的隐患。</p>
-      <pre><span class="c"># .github/workflows/deploy-pages.yml —— 删除这一段</span>
-<span class="k">-</span> name: Exclude custom domain (mirror on github.io only)
-<span class="k">-</span>   run: rm -f CNAME</pre>
-      <p>同时把 <code>CNAME</code> 文件补上结尾换行（当前是 <code>www.paomfz.com</code> 无换行），并确认 GitHub 仓库 Settings → Pages → Custom domain 中已填写 <code>www.paomfz.com</code>。</p>
-    </div>
-  </div>
+### 6.3 渲染优化
+- ✅ 使用 `will-change` 和 `transform` 硬件加速
+- ✅ IntersectionObserver 懒加载动画
+- ✅ prefers-reduced-motion 无障碍支持
+- ✅ `requestAnimationFrame` 节流滚动事件
 
-  <div class="fix">
-    <div class="fix-h"><span class="b b-err">P0</span><span class="t">为 10 个外链补 <code>rel="noopener noreferrer"</code></span><span class="effort">5 分钟</span></div>
-    <div class="fix-b">
-      <p>index.html 6 处、download.html 4 处。涉及 Discord / Telegram / YouTube / SmileGate / 支付站，属于可批量替换的低风险修改。</p>
-      <pre><span class="k">&lt;a</span> href="https://discord.com/invite/..." target="_blank"<span class="s"> rel="noopener noreferrer"</span><span class="k">&gt;</span></pre>
-    </div>
-  </div>
+---
 
-  <h3 style="color:var(--amber)">P1 · 两周内</h3>
+## 七、仓库健康度
 
-  <div class="fix">
-    <div class="fix-h"><span class="b b-warn">P1</span><span class="t">清理 69 MB 死文件 + 785 KB 死图片</span><span class="effort">20 分钟</span></div>
-    <div class="fix-b">
-      <p>删除 <code>down/ph/7A638484.zip</code>、整个 <code>down/speed/</code>（3 × 12.7 MB）、<code>static/images/</code> 下 13 个零引用文件。执行前先确认这些包确实不再提供服务。</p>
-      <p class="mono" style="font-size:12.5px;color:var(--ink-3)">注意：从 git 中删除只是新增一条删除记录，历史 blob 仍在。真正的瘦身见下一条。</p>
-    </div>
-  </div>
+### 7.1 Git 历史
+- 分支：`main`（1 个活跃分支）
+- 提交数：30+ 次（可见历史）
+- 提交信息：全部为 "1" ❌
+- 远程仓库：`github.com/qqxiaochen/webw`
 
-  <div class="fix">
-    <div class="fix-h"><span class="b b-warn">P1</span><span class="t">仓库瘦身：1.5 GB → &lt; 50 MB</span><span class="effort">1 小时（需强制推送）</span></div>
-    <div class="fix-b">
-      <p>两阶段：先把 ZIP 从源码管理中彻底剥离，再 <code>git gc</code> 打包。</p>
-      <pre><span class="c"># 方案 A：BFG（推荐，更快）</span>
-$ java -jar bfg.jar --delete-files '*.zip' --no-blob-protection webw.git
-$ git reflog expire --expire=now --all &amp;&amp; git gc --prune=now --aggressive
+### 7.2 仓库体积
+- 工作树：~169MB（含死文件）
+- git 对象：大量 loose objects（未 gc）
+- 二进制污染：历史中出现多个 31MB ZIP
 
-<span class="c"># 方案 B：原生 filter-branch</span>
-$ git filter-branch --force --index-filter \
-    'git rm -rf --cached --ignore-unmatch down/ static/' --prune-empty -- --all
-$ git reflog expire --expire=now --all &amp;&amp; git gc --prune=now --aggressive
+### 7.3 待清理
+```bash
+# 建议执行
+git gc --aggressive
+git prune --expire=now
+```
 
-<span class="c"># 然后把 down/ 加入 .gitignore，改用对象存储/CDN 托管大文件</span>
-<span class="k">echo</span> "down/" &gt;&gt; .gitignore
-<span class="k">echo</span> ".workbuddy/reports/" &gt;&gt; .gitignore
-<span class="k">echo</span> ".workbuddy/tmp/" &gt;&gt; .gitignore</pre>
-      <p><b>警告：</b>此操作重写全部历史，需要 <code>git push --force</code>。若有协作者，须提前通知所有人重新 clone。建议先在 <code>--mirror</code> 克隆上演练。</p>
-    </div>
-  </div>
+---
 
-  <div class="fix">
-    <div class="fix-h"><span class="b b-warn">P1</span><span class="t">404.html 三项修正</span><span class="effort">10 分钟</span></div>
-    <div class="fix-b">
-      <ul class="li" style="margin-top:0">
-        <li>补 <code>&lt;!DOCTYPE html&gt;</code>（消除 quirks mode）</li>
-        <li>viewport 改为 <code>width=device-width, initial-scale=1.0</code>（删掉禁用缩放的三个参数）</li>
-        <li><code>lang="en"</code> → <code>lang="zh-CN"</code></li>
-      </ul>
-    </div>
-  </div>
+## 八、设计规范一致性
 
-  <div class="fix">
-    <div class="fix-h"><span class="b b-warn">P1</span><span class="t">补齐 sitemap.xml + robots.txt</span><span class="effort">15 分钟</span></div>
-    <div class="fix-b">
-      <p>全站仅 3 个页面，手写即可。既然百度和 Google 的验证文件都已部署，不提交 sitemap 等于浪费了已接入的站长平台。</p>
-    </div>
-  </div>
+### 8.1 CSS 设计令牌对比
 
-  <h3 style="color:var(--blue)">P2 · 有余力再做</h3>
+| Token | index/download | 404 |
+|-------|----------------|-----|
+| 背景色 | `#0b0c12` 深黑 | `#eef3fb` 浅蓝 |
+| 玻璃模糊 | `blur(28px)` | `blur(40px)` |
+| 饱和锐化 | `saturate(140%)` | `saturate(200%)` |
+| 圆角 | 24-32px | 20-30px |
+| 投影 | 深色重投影 | 浅色漂浮投影 |
 
-  <div class="fix">
-    <div class="fix-h"><span class="b b-info">P2</span><span class="t">在 Cloudflare 补齐 5 个安全响应头</span><span class="effort">15 分钟</span></div>
-    <div class="fix-b">
-      <p>HSTS / CSP / X-Frame-Options / X-Content-Type-Options / Referrer-Policy。注意 GitHub Pages 不支持 <code>_headers</code> 文件，必须走 Cloudflare 的 Rules → Response Header Transform 配置。CSP 若配置过严会阻断 YouTube iframe，建议先用 <code>Content-Security-Policy-Report-Only</code> 观察一周再切正式。</p>
-    </div>
-  </div>
+### 8.2 交互模式对比
+- ✅ 导航交互一致（浮动 pill、滚动收缩）
+- ✅ 玻璃面板效果一致（受光描边、内反射）
+- ❌ 404 页面使用完全不同的视觉语言
 
-  <div class="fix">
-    <div class="fix-h"><span class="b b-info">P2</span><span class="t">download.html 补 h1 + 删除 keywords 堆砌</span><span class="effort">10 分钟</span></div>
-    <div class="fix-b">
-      <p>下载页加一个视觉隐藏或可见的 h1；两个页面的 <code>&lt;meta name="keywords"&gt;</code> 整行删除。</p>
-    </div>
-  </div>
+---
 
-  <div class="fix">
-    <div class="fix-h"><span class="b b-info">P2</span><span class="t">抽离共用 CSS</span><span class="effort">2 小时</span></div>
-    <div class="fix-b">
-      <p>把导航 / 玻璃系统 / 按钮 / modal / footer / reveal 抽成 <code>static/site.css</code>，三页引用。当前 index 与 download 有约 60% CSS 重复 —— 8-28 改版要动三个文件、备份六份，根源就在这里。抽离后改版只需动一处。</p>
-      <p class="mono" style="font-size:12.5px;color:var(--ink-3)">代价：引入 1 个外部请求，自包含性略有下降。对 3 个静态页来说，可维护性收益大于这点损耗。</p>
-    </div>
-  </div>
+## 九、行动项优先级
 
-  <div class="fix">
-    <div class="fix-h"><span class="b b-info">P2</span><span class="t">统一页脚声明 + OG 分享图</span><span class="effort">30 分钟</span></div>
-    <div class="fix-b">
-      <p>统一 index / download 的 "(Except China)" 声明，并同步调整支付渠道（二选一，不能并存）；制作 1200×630 的 OG 分享图替换当前的 favicon.ico。</p>
-    </div>
-  </div>
+### 🔴 P0 - 立即修复
+1. [ ] 移除 CI 中的 `rm -f CNAME` 步骤（或改用 Pages 高级配置）
+2. [ ] 修复或删除 VN 死链下载入口
+3. [ ] 为所有 `target="_blank"` 添加 `rel="noopener noreferrer"`
 
-  <div class="fix">
-    <div class="fix-h"><span class="b b-info">P2</span><span class="t">YouTube iframe 改 facade 懒加载</span><span class="effort">30 分钟</span></div>
-    <div class="fix-b">
-      <p>用静态封面图占位，点击后再注入 iframe。可省去约 1 MB 的播放器脚本，首屏 LCP 明显改善。</p>
-    </div>
-  </div>
-</section>
+### 🟠 P1 - 近期修复
+4. [ ] 补全 404.html 的 DOCTYPE、正确 lang、viewport 可读性
+5. [ ] 为 download.html 添加语义化 h1
+6. [ ] 删除 index.html 的 keywords 堆砌
+7. [ ] 清理 169MB 死文件（speed/ × 3 + ph/7A638484.zip + static/images/ × 13）
+8. [ ] 统一三页视觉风格（404 页改为深色磨砂玻璃）
 
-<footer class="rpt">
-  PaoMian Hax 项目深度分析报告 v3 · 生成于 2026-08-29 · 数据源：本地文件系统 + git 对象库 + 线上 HTTP 实测<br>
-  报告路径：<code>.workbuddy/reports/project-deep-analysis-20260829-v3.html</code>
-</footer>
+### 🟡 P2 - 长期优化
+9. [ ] 抽取公共 CSS 到 `static/site.css`
+10. [ ] 添加安全响应头（通过 Cloudflare Workers 或 GitHub Pages）
+11. [ ] 生成 sitemap.xml 和 robots.txt
+12. [ ] 改进 git 提交信息规范
+13. [ ] 修正支付渠道合规声明
+14. [ ] 运行 git gc 清理仓库历史
 
-</div>
-</body>
-</html>
+---
+
+## 十、附录：关键链接
+
+| 资源 | URL |
+|------|-----|
+| 官方网站 | https://www.paomfz.com/ |
+| 下载中心 | https://www.paomfz.com/download.html |
+| 404 测试 | https://www.paomfz.com/nonexistent |
+| GitHub 仓库 | https://github.com/qqxiaochen/webw |
+| CI 工作流 | `.github/workflows/deploy-pages.yml` |
+
+---
+
+*报告生成时间：2026-08-29*
+*分析工具：手动代码审查 + curl 线上实测*

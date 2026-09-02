@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>老旧浏览器内核兼容性评估报告 · PaoMian Hax</title>
+<style>
+:root{
+  --ink:#1a1d24; --ink-2:#4a5163; --ink-3:#767d90;
+  --line:#e3e6ec; --line-2:#eef0f4;
+  --bg:#f7f8fa; --card:#ffffff;
+  --accent:#2f5fd8;
+  --p1:#d92d20; --p1-bg:#fef3f2;
+  --p2:#dc6803; --p2-bg:#fffaeb;
+  --p3:#667085; --p3-bg:#f2f4f7;
+  --ok:#067647; --ok-bg:#ecfdf3;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.7;font-size:14.5px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px 100px}
+
+/* ---------- header ---------- */
+.hero{background:#fff;border-bottom:1px solid var(--line);padding:52px 0 40px;margin-bottom:36px}
+.hero-in{max-width:1180px;margin:0 auto;padding:0 28px}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:2.4px;color:var(--accent);text-transform:uppercase;margin-bottom:12px}
+h1{font-size:31px;font-weight:700;letter-spacing:-.02em;line-height:1.25;margin-bottom:12px}
+.lede{font-size:15px;color:var(--ink-2);max-width:820px}
+.meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.chip{font-size:12px;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:5px 13px}
+.chip b{color:var(--ink);font-weight:600}
+
+/* ---------- verdict ---------- */
+.verdict{background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px 28px;margin-bottom:32px}
+.verdict h2{font-size:17px;margin-bottom:14px;letter-spacing:-.01em}
+.verdict p{color:var(--ink-2);margin-bottom:12px}
+.verdict p:last-child{margin-bottom:0}
+.verdict strong{color:var(--ink)}
+
+/* ---------- scorecard ---------- */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:34px}
+.sc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.sc .n{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.sc .l{font-size:12.5px;color:var(--ink-3);margin-top:3px}
+.sc.p1 .n{color:var(--p1)} .sc.p2 .n{color:var(--p2)}
+.sc.p3 .n{color:var(--p3)} .sc.ok .n{color:var(--ok)}
+
+/* ---------- sections ---------- */
+section{margin-bottom:40px}
+h2.sec{font-size:20px;font-weight:700;letter-spacing:-.015em;margin-bottom:6px;
+  padding-bottom:12px;border-bottom:2px solid var(--ink);display:inline-block}
+.sub{font-size:13.5px;color:var(--ink-3);margin:10px 0 20px}
+
+h3{font-size:15.5px;font-weight:650;margin:26px 0 10px;letter-spacing:-.01em}
+p{margin-bottom:11px;color:var(--ink-2)}
+p strong,li strong{color:var(--ink);font-weight:620}
+ul,ol{margin:0 0 12px 20px;color:var(--ink-2)}
+li{margin-bottom:5px}
+code{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line-2);
+  border-radius:5px;padding:1px 5px;color:#344054}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto;margin:14px 0 18px;border:1px solid var(--line);border-radius:12px;background:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:720px}
+th{text-align:left;font-weight:650;color:var(--ink-2);background:#fbfcfd;
+  padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:12px;
+  letter-spacing:.3px;text-transform:uppercase}
+td{padding:11px 14px;border-bottom:1px solid var(--line-2);vertical-align:top;color:var(--ink-2)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#fcfcfd}
+td.k{color:var(--ink);font-weight:560;white-space:nowrap}
+td.loc{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);white-space:nowrap}
+
+.badge{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:5px;
+  letter-spacing:.4px;white-space:nowrap}
+.b1{background:var(--p1-bg);color:var(--p1);border:1px solid #fecdca}
+.b2{background:var(--p2-bg);color:var(--p2);border:1px solid #fedf89}
+.b3{background:var(--p3-bg);color:var(--p3);border:1px solid #e4e7ec}
+.bok{background:var(--ok-bg);color:var(--ok);border:1px solid #abefc6}
+
+/* ---------- code ---------- */
+pre{background:#1d2029;color:#e6e9ef;border-radius:10px;padding:15px 18px;overflow-x:auto;
+  font-family:var(--mono);font-size:12.5px;line-height:1.65;margin:12px 0 16px}
+pre .c{color:#8b93a7}
+pre .g{color:#7ee787}
+pre .r{color:#ff9492}
+pre .y{color:#e3b341}
+pre .b{color:#79c0ff}
+
+/* ---------- callout ---------- */
+.note{border-left:3px solid var(--accent);background:#f5f8ff;padding:14px 18px;border-radius:0 8px 8px 0;margin:14px 0}
+.note.warn{border-left-color:var(--p2);background:var(--p2-bg)}
+.note.good{border-left-color:var(--ok);background:var(--ok-bg)}
+.note.bad{border-left-color:var(--p1);background:var(--p1-bg)}
+.note .t{font-weight:650;color:var(--ink);font-size:13.5px;margin-bottom:4px}
+.note p{margin-bottom:0;font-size:13.5px}
+.note p + p{margin-top:7px}
+
+/* ---------- matrix ---------- */
+.mx td:first-child{white-space:nowrap;font-weight:600;color:var(--ink)}
+.pct{display:inline-block;min-width:44px;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:650;text-align:center}
+.pct.hi{background:var(--ok-bg);color:var(--ok)}
+.pct.mid{background:var(--p2-bg);color:var(--p2)}
+.pct.lo{background:var(--p1-bg);color:var(--p1)}
+
+/* ---------- plan ---------- */
+.plan{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.plan-h{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.plan-h .tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;letter-spacing:.3px}
+.t-rec{background:var(--ok-bg);color:var(--ok);border:1px solid #abefc6}
+.t-alt{background:var(--p2-bg);color:var(--p2);border:1px solid #fedf89}
+.t-no{background:var(--p1-bg);color:var(--p1);border:1px solid #fecdca}
+.plan-h .ttl{font-weight:650;font-size:14.5px;color:var(--ink)}
+.plan-h .cost{margin-left:auto;font-size:12.5px;color:var(--ink-3)}
+.plan-b{padding:16px 20px}
+.plan-b ol{margin:0 0 0 18px}
+
+footer{border-top:1px solid var(--line);padding-top:22px;margin-top:50px;font-size:12.5px;color:var(--ink-3)}
+
+@media(max-width:820px){
+  .cards{grid-template-columns:repeat(2,1fr)}
+  .wrap{padding:0 18px 60px}
+  .hero-in{padding:0 18px}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-in">
+    <div class="eyebrow">Compatibility Audit · v1</div>
+    <h1>老旧浏览器内核兼容性评估报告</h1>
+    <p class="lede">针对 PaoMian Hax 官网（paomfz.com）三份页面与全部第三方依赖，逐项识别 IE11 / EdgeHTML / 旧 WebKit / 旧 Firefox / 旧 Chromium 上不被支持的前端特性，标注受影响的内核版本、运行时症状与降级方案。</p>
+    <div class="meta-row">
+      <span class="chip">评估日期 <b>2026-09-02</b></span>
+      <span class="chip">扫描范围 <b>index / download / 404 共 1695 行</b></span>
+      <span class="chip">第三方 JS 库 <b>0 个</b></span>
+      <span class="chip">问题项 <b>42 条</b></span>
+      <span class="chip">方法 <b>静态扫描 + 线上实测</b></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ 结论 ============ -->
+  <div class="verdict">
+    <h2>总体结论</h2>
+    <p><strong>JavaScript 层面出人意料地干净。</strong>三份页面的脚本全部是 ES5 写法——没有 <code>let</code>/<code>const</code>、没有箭头函数、没有模板字符串、没有解构与展开运算、没有 <code>for...of</code>。机器扫描确认 <strong>ES6+ 语法命中 0 处</strong>。这意味着<strong>不需要引入 Babel 或任何构建期转译</strong>，这是本次评估最重要的好消息。</p>
+    <p><strong>真正的重灾区在 CSS，且集中在一个根因上：全站 225 处 <code>var()</code> 引用。</strong>IE11 完全不支持 CSS 自定义属性，所有含 <code>var()</code> 的声明会被整条丢弃——深色背景、文字颜色、字体栈、圆角、阴影、玻璃质感会同时消失，页面退化为「白底 + 黑字 + 直角 + 宋体」。内容仍可读、下载链接仍可点，但品牌视觉 100% 丢失。这不是 20 个独立问题，而是<strong>一个根因引发的连锁崩塌</strong>，因此修复成本远看上去低。</p>
+    <p><strong>有一处设计陷阱值得单独点名：</strong><code>index.html:277-282</code> 用 <code>@supports not (aspect-ratio)</code> 写降级。这个写法在 IE11 上<strong>等于没有降级</strong>——因为 IE11 连 <code>@supports</code> 本身都不支持，整个兜底块会被直接丢弃，导致 YouTube 视频容器高度塌陷为 0。<strong>用 <code>@supports</code> 写的兜底，救不了不支持 <code>@supports</code> 的浏览器。</strong>方向应该反过来：默认用 padding hack，再用 <code>@supports</code> 升级到 <code>aspect-ratio</code>。</p>
+    <p><strong>但请先读完第 6 节再决定投入。</strong>本站用户是越南/菲律宾/欧美的 CF 玩家，IE11 实际占比大概率低于 0.1%，而东南亚老旧 Android WebView（UC / QQ / X5 内核）可能占 5–15%。<strong>「老旧内核」这个词在你们的用户群里，指的恐怕不是 IE。</strong>建议先去 Cloudflare 面板导出 UA 分布再排优先级——站点目前<strong>没有任何统计埋点</strong>，谁都说不准真实占比。</p>
+  </div>
+
+  <div class="cards">
+    <div class="sc p1"><div class="n">6</div><div class="l">P1 严重 · 功能失效或视觉体系崩塌</div></div>
+    <div class="sc p2"><div class="n">11</div><div class="l">P2 中等 · 次要受损或明显劣化</div></div>
+    <div class="sc p3"><div class="n">12</div><div class="l">P3 轻微 · 增强特性缺失</div></div>
+    <div class="sc ok"><div class="n">13</div><div class="l">通过 · 已正确兼容或降级</div></div>
+  </div>
+
+  <!-- ============ 1 方法 ============ -->
+  <section id="method">
+    <h2 class="sec">1 · 评估方法与范围</h2>
+    <p class="sub">不是凭印象打分，而是脚本扫描 + 线上实测双重取数。</p>
+
+    <h3>1.1 扫描对象</h3>
+    <div class="tw"><table>
+      <thead><tr><th>文件</th><th>行数</th><th>体积</th><th>角色</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="k">index.html</td><td>781</td><td>39.1 KB</td><td>首页 / 主转化页</td><td>HTML+CSS+JS 全内联，单文件自包含</td></tr>
+        <tr><td class="k">download.html</td><td>619</td><td>29.5 KB</td><td>下载中心</td><td>同上；CSS 与 index 高度重复</td></tr>
+        <tr><td class="k">404.html</td><td>295</td><td>20.3 KB</td><td>自定义 404</td><td>浅色 Apple Liquid Glass 风格，仅 1 段 12 行脚本</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>1.2 取数方式</h3>
+    <ul>
+      <li><strong>静态扫描</strong>：自写脚本 <code>.workbuddy/tmp/compat_scan.py</code>，52 条正则规则（JS 语法 / JS API / CSS / HTML 四类）逐行匹配，输出命中行号与频次。规则可复用，后续改版可回归。</li>
+      <li><strong>支持度核对</strong>：关键版本号逐一查证，不凭记忆。<code>backdrop-filter</code> 已核实 Firefox <strong>103</strong> 起默认启用、Safari 需 <code>-webkit-</code> 前缀（本项目已带）；<code>window.scrollY</code> 已核实 IE 全系不支持（MDN 明确建议改用 <code>pageYOffset</code>）；<code>classList.toggle</code> 第二参已核实 IE 不支持；<code>Element.closest</code> 已核实 IE 不支持（MDN 的 polyfill 正是为 IE9+ 写的）；<code>e.key</code> 已核实 IE9–11 与 EdgeHTML 返回 <code>'Esc'</code> 而非 <code>'Escape'</code>。</li>
+      <li><strong>线上实测</strong>：对 <code>https://www.paomfz.com/</code> 做 TLS 版本探测与响应头抓取，验证老浏览器能否握手、以及部署链路现状。</li>
+    </ul>
+
+    <h3>1.3 严重程度定义</h3>
+    <div class="tw"><table>
+      <thead><tr><th>等级</th><th>定义</th><th>处置原则</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b1">P1</span></td><td>核心功能/交互失效，或视觉体系整体崩塌</td><td>必须修（若决定支持该浏览器）</td></tr>
+        <tr><td><span class="badge b2">P2</span></td><td>次要功能受损，或明显视觉劣化</td><td>排期修</td></tr>
+        <tr><td><span class="badge b3">P3</span></td><td>增强特性缺失，用户基本无感或可自然降级</td><td>可不修</td></tr>
+        <tr><td><span class="badge bok">通过</span></td><td>已正确兼容，或已实现安全的渐进增强</td><td>保持</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">
+      <div class="t">为什么本次没有 P0</div>
+      <p>P0 定义为「核心转化路径不可用或页面不可读」。扫描下来最坏的情况是 IE11：视觉体系崩塌、部分交互失效，但<strong>三份页面的 HTML 内容、下载链接、购买入口全部可达且可读</strong>。因此最高只到 P1。需要注意——<code>pay.paomfz.com</code> 持续返回 403、<code>mall.909net.cn</code> 不可达，这两个是既往已记录的 P0，但它们与浏览器兼容性无关，属于运维问题，本报告仅在 DEP-04 顺带复核状态。</p>
+    </div>
+  </section>
+
+  <!-- ============ 2 依赖 ============ -->
+  <section id="deps">
+    <h2 class="sec">2 · 第三方依赖清单</h2>
+    <p class="sub">先厘清「依赖了什么」，再谈兼容性——这一节的结论相当正面。</p>
+
+    <div class="tw"><table>
+      <thead><tr><th>依赖项</th><th>类型</th><th>状态</th><th>兼容性影响</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">JS 框架 / 库</td><td>运行时</td>
+          <td><span class="badge bok">0 个</span></td>
+          <td>历史上的 jQuery / UIkit / widget 体系已全部移除。无库版本冲突、无 CVE 面、无 CDN 可用性风险。</td>
+        </tr>
+        <tr>
+          <td class="k">Web 字体</td><td>运行时</td>
+          <td><span class="badge bok">0 个</span></td>
+          <td>无 Google Fonts、无自托管 webfont。字体栈为纯系统字体（<code>-apple-system → PingFang SC → Segoe UI → Microsoft YaHei → sans-serif</code>）。无 FOUT/FOIT、无字体 CDN 依赖、IE11 也能落到雅黑。</td>
+        </tr>
+        <tr>
+          <td class="k">Polyfill</td><td>运行时</td>
+          <td><span class="badge b3">0 个</span></td>
+          <td><strong>本项目唯一的"依赖缺口"</strong>：既没有 <code>closest</code> polyfill，也没有 <code>IntersectionObserver</code>/<code>Promise</code> 补齐。好消息是后者已用特性检测自行降级，缺口只剩 <code>closest</code> 一处（见 JS-03）。</td>
+        </tr>
+        <tr>
+          <td class="k">YouTube iframe</td><td>运行时</td>
+          <td><span class="badge b1">P1</span></td>
+          <td><code>index.html:571</code>。YouTube 官方自 2020 起不再支持 IE11，老内核会显示"浏览器不受支持"提示；大陆用户不可达；<code>loading="lazy"</code> 仅 Chrome 77+ 生效。<strong>且站点没有任何兜底</strong>。见 DEP-03。</td>
+        </tr>
+        <tr>
+          <td class="k">外链目标站</td><td>跳转</td>
+          <td><span class="badge b2">P2</span></td>
+          <td><code>pay.paomfz.com</code>（2 个 Purchase 按钮）<strong>仍返回 403</strong>；<code>mall.909net.cn</code>（Hero 店铺按钮）<strong>仍不可达</strong>；<code>discord.com</code> / <code>t.me</code> / <code>smilegate.com</code> 正常。见 DEP-04。</td>
+        </tr>
+        <tr>
+          <td class="k">TLS / 传输层</td><td>基础设施</td>
+          <td><span class="badge bok">通过</span></td>
+          <td>实测 TLS 1.0 / 1.1 / 1.2 <strong>握手全部返回 200</strong>。这意味着 Win7 上的 IE11（默认不开 TLS 1.2）<strong>也连得上</strong>。对老浏览器是利好，对安全是弱点。见 DEP-05。</td>
+        </tr>
+      </tbody>
+    </table></div>
+
+    <div class="note good">
+      <div class="t">零外部依赖是本项目最大的兼容性资产</div>
+      <p>没有 npm、没有 CDN、没有字体、没有图床，三个文件丢到任何静态托管都能跑。这意味着<strong>兼容性问题全部收敛在代码本身，不存在"第三方库拖后腿"的黑盒</strong>。也正因如此，<strong>不要为了兼容而引入 polyfill CDN</strong>（会毁掉这个特性，且 polyfill.io 有过供应链安全事故）。需要补的东西应当内联，见方案 B。</p>
+    </div>
+  </section>
+
+  <!-- ============ 3 JS ============ -->
+  <section id="js">
+    <h2 class="sec">3 · JavaScript 兼容性问题</h2>
+    <p class="sub">17 条：1 通过项打头，5 条 P1/P2，其余为轻微。</p>
+
+    <div class="tw"><table>
+      <thead><tr><th>ID</th><th>级别</th><th>特性</th><th>位置</th><th>受影响内核</th><th>运行时症状</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">JS-01</td><td><span class="badge bok">通过</span></td>
+          <td>ES6+ 语法</td><td class="loc">三页 JS 全部</td>
+          <td>—</td>
+          <td><strong>命中 0 处。</strong>无 let/const、无箭头函数、无模板字符串、无解构、无展开、无 for-of，全部 <code>var</code> + 函数表达式 + 字符串拼接。<strong>无需 Babel。</strong></td>
+        </tr>
+        <tr>
+          <td class="k">JS-02</td><td><span class="badge b1">P1</span></td>
+          <td><code>window.scrollY</code></td>
+          <td class="loc">index:652,666<br>download:514,555</td>
+          <td>IE 全系<br>（Edge 12+ OK）</td>
+          <td>IE11 中该属性为 <code>undefined</code>。① 导航条滚动收缩状态永不触发；② <code>Math.min(undefined,620)</code> 得 <code>NaN</code>，Hero 视差计算失效（所幸赋值 <code>NaN</code> 会被忽略，不至于隐形）；③ <strong><code>download.html:555</code> 的「返回顶部」按钮永不显示 → 该功能在 IE11 完全丢失</strong>。</td>
+        </tr>
+        <tr>
+          <td class="k">JS-03</td><td><span class="badge b1">P1</span></td>
+          <td><code>Element.closest()</code></td>
+          <td class="loc">index:690<br>download:532,610</td>
+          <td>IE 全系<br>Edge 12–14<br>Safari &lt;9<br>Chrome &lt;41 / FF &lt;35</td>
+          <td><strong>会抛 TypeError，属运行时异常而非静默降级。</strong>① <code>download.html:610</code>：整卡点击下载在 IE11 <strong>彻底失效</strong>（异常中断处理函数）；② <code>index:690</code> / <code>download:532</code>：移动端菜单点击链接后不收起。</td>
+        </tr>
+        <tr>
+          <td class="k">JS-04</td><td><span class="badge b2">P2</span></td>
+          <td><code>classList.toggle(cls, force)</code><br>第二参数</td>
+          <td class="loc">index:652,686<br>download:514,528,555</td>
+          <td>IE 全系<br>（Edge 12+ OK）</td>
+          <td>IE11 忽略第二个布尔参数，退化为无条件翻转。<strong>后果：导航条在滚动过程中高频闪烁</strong>（每个 scroll 事件翻转一次状态）。另 <code>var open = menu.classList.toggle('open')</code> 在 IE11 返回值实现不一致，<code>aria-expanded</code> 与汉堡图标动画可能不同步。</td>
+        </tr>
+        <tr>
+          <td class="k">JS-05</td><td><span class="badge b2">P2</span></td>
+          <td><code>e.key === 'Escape'</code></td>
+          <td class="loc">index:723<br>download:604</td>
+          <td>IE 9–11<br>EdgeHTML 12–18<br>Firefox ≤36</td>
+          <td>这些内核的 Esc 键返回 <code>'Esc'</code> 而非 <code>'Escape'</code>。<strong>后果：IE11 / EdgeHTML 下按 Esc 无法关闭弹窗。</strong>仍可点遮罩或 × 按钮关闭，不致命但体验缺失。</td>
+        </tr>
+        <tr>
+          <td class="k">JS-06</td><td><span class="badge b2">P2</span></td>
+          <td><code>scrollTo({top,behavior})</code><br>ScrollToOptions</td>
+          <td class="loc">download:558</td>
+          <td>IE 全系<br>旧 Safari / 旧 Chromium</td>
+          <td>传入对象参数在不支持的内核上行为未定义（可能被当作 x 坐标处理，产生横向跳动）。<strong>「返回顶部」点了之后行为异常。</strong></td>
+        </tr>
+        <tr>
+          <td class="k">JS-07</td><td><span class="badge b2">P2</span></td>
+          <td><code>js</code> class 门控脆弱性</td>
+          <td class="loc">index:472,644<br>download:383,506</td>
+          <td>所有老内核</td>
+          <td>CSS 用 <code>.js .reveal{opacity:0}</code> 隐藏内容，靠 JS 加 <code>.in</code> 显现。目前靠 IO 的 else 分支兜底，<strong>但这依赖脚本执行顺序不出错</strong>——一旦 JS-03 的 <code>closest</code> 在更早位置抛错，reveal 元素会永久停在 <code>opacity:0</code> 变成空白。属于设计脆弱，当前实际不触发。</td>
+        </tr>
+        <tr>
+          <td class="k">JS-08</td><td><span class="badge b3">P3</span></td>
+          <td><code>addEventListener</code> options<br><code>{passive:true}</code></td>
+          <td class="loc">index:658,679<br>download:520</td>
+          <td>IE 全系<br>Chrome &lt;51 / Safari &lt;10</td>
+          <td>IE11 不识别 options 对象，按 <code>ToBoolean</code> 转为 <code>true</code> → <strong>按捕获阶段注册</strong>。对 scroll 监听语义影响有限。</td>
+        </tr>
+        <tr>
+          <td class="k">JS-09</td><td><span class="badge b3">P3</span></td>
+          <td><code>{once:true}</code></td>
+          <td class="loc">index:754</td>
+          <td>IE 全系<br>旧 Safari</td>
+          <td>音乐自动播放被拦截后的兜底 click 监听不会自动移除。但代码内已手动 <code>removeEventListener</code>，实际自愈，影响可忽略。</td>
+        </tr>
+        <tr>
+          <td class="k">JS-10</td><td><span class="badge bok">通过</span></td>
+          <td><code>IntersectionObserver</code><br>特性检测降级</td>
+          <td class="loc">index:699<br>download:541</td>
+          <td>—</td>
+          <td><strong>写法正确</strong>：<code>if('IntersectionObserver' in window){...}else{全部加 .in}</code>。不支持的内核直接显示全部内容，无空白风险。这是本项目里做得最漂亮的一处降级。</td>
+        </tr>
+        <tr>
+          <td class="k">JS-11</td><td><span class="badge bok">通过</span></td>
+          <td><code>audio.play()</code> Promise 判空</td>
+          <td class="loc">index:743</td>
+          <td>—</td>
+          <td>已写 <code>if(p &amp;&amp; p.catch)</code>，兼容 IE11 返回 <code>undefined</code> 的情况。<strong>写法正确。</strong></td>
+        </tr>
+        <tr>
+          <td class="k">JS-12</td><td><span class="badge bok">通过</span></td>
+          <td>404.html 全部脚本</td>
+          <td class="loc">404:293</td>
+          <td>—</td>
+          <td>仅 <code>window.onload</code> / <code>getElementsByClassName</code> / <code>setTimeout</code> / <code>location.href</code>，<strong>IE9+ 全兼容，零问题</strong>。</td>
+        </tr>
+      </tbody>
+    </table></div>
+
+    <div class="note bad">
+      <div class="t">JS-03 是本次唯一会造成"功能彻底死掉"的 JS 问题</div>
+      <p>其余 JS 问题大多是"状态不对"或"体验缺失"，但 <code>download.html:610</code> 的 <code>closest</code> 会<strong>抛异常</strong>：<code>card.addEventListener('click', function(e){ if(e.target.closest('.dl-actions')...) })</code>——在 IE11 上每次点击卡片都抛错，整卡下载交互完全不可用。<strong>而下载页的核心交互恰恰就是这个。</strong>如果只修一个 JS 问题，修这个。</p>
+    </div>
+
+    <h3>3.1 关键修复代码</h3>
+<pre><span class="c">// ── JS-02 / JS-03 / JS-05 的统一兜底（内联到两页 IIFE 顶部，约 20 行）──</span>
+
+<span class="c">// 1) 滚动位置：IE 全系无 scrollY</span>
+<span class="b">function</span> scrollTop(){
+  <span class="b">return</span> window.pageYOffset != <span class="y">null</span>
+    ? window.pageYOffset
+    : (document.documentElement.scrollTop || document.body.scrollTop || <span class="y">0</span>);
+}
+<span class="c">// 替换 4 处 window.scrollY → scrollTop()</span>
+
+<span class="c">// 2) closest polyfill（MDN 标准写法，覆盖 IE9+ / 旧 WebKit）</span>
+<span class="b">if</span> (window.Element &amp;&amp; !Element.prototype.closest) {
+  Element.prototype.matches = Element.prototype.matches
+    || Element.prototype.msMatchesSelector
+    || Element.prototype.webkitMatchesSelector;
+  Element.prototype.closest = <span class="b">function</span>(s){
+    <span class="b">var</span> el = <span class="y">this</span>;
+    <span class="b">do</span> { <span class="b">if</span> (el.matches &amp;&amp; el.matches(s)) <span class="b">return</span> el; el = el.parentElement; }
+    <span class="b">while</span> (el !== <span class="y">null</span>);
+    <span class="b">return</span> <span class="y">null</span>;
+  };
+}
+
+<span class="c">// 3) classList.toggle 第二参：改用显式 add/remove，避免 IE 闪烁</span>
+<span class="r">- nav.classList.toggle('scrolled', scrollTop() &gt; 24);</span>
+<span class="g">+ var sc = scrollTop() &gt; 24;</span>
+<span class="g">+ if (sc) { nav.classList.add('scrolled'); } else { nav.classList.remove('scrolled'); }</span>
+<span class="c">// 同理替换 index:686 / download:528,555 三处</span>
+
+<span class="c">// 4) Esc 键归一化（IE9-11 / EdgeHTML / FF≤36 返回 'Esc'）</span>
+<span class="r">- if (e.key === 'Escape' &amp;&amp; modal.classList.contains('open')) closeModal();</span>
+<span class="g">+ var k = e.key || e.keyCode;</span>
+<span class="g">+ if ((k === 'Escape' || k === 'Esc' || k === 27) &amp;&amp; modal.classList.contains('open')) closeModal();</span>
+
+<span class="c">// 5) 返回顶部：对象参数改数值，平滑滚动交给 CSS scroll-behavior</span>
+<span class="r">- window.scrollTo({top:0, behavior:'smooth'});</span>
+<span class="g">+ window.scrollTo(0, 0);</span></pre>
+  </section>
+
+  <!-- ============ 4 CSS ============ -->
+  <section id="css">
+    <h2 class="sec">4 · CSS 兼容性问题</h2>
+    <p class="sub">19 条。绝大部分 IE11 症状由同一个根因（var）引发。</p>
+
+    <div class="tw"><table>
+      <thead><tr><th>ID</th><th>级别</th><th>特性</th><th>位置 / 数量</th><th>受影响内核</th><th>症状</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">CSS-01</td><td><span class="badge b1">P1</span></td>
+          <td><strong>CSS 自定义属性 <code>var()</code></strong></td>
+          <td class="loc">index 25定义/98引用<br>download 25/85<br>404 20/42<br><strong>合计 70 / 225</strong></td>
+          <td>IE 全系<br>Edge 12–14<br>Chrome &lt;49<br>Safari &lt;9.1 / FF &lt;31<br>Opera Mini</td>
+          <td><strong>根因级问题。</strong>不支持时含 <code>var()</code> 的声明<strong>整条丢弃</strong>：<code>body</code> 背景→透明（白底）、文字色→黑、字体栈→宋体、<code>border-radius</code>→直角、<code>box-shadow</code>→无、<code>.glass</code> 背景→无、<code>.btn-primary</code> 底色→无。IE11 净呈现：<strong>白底 + 黑字 + 直角 + 宋体 + 无玻璃</strong>。内容仍可读，品牌视觉 100% 丢失。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-02</td><td><span class="badge b1">P1</span></td>
+          <td><code>aspect-ratio</code><br>+ <code>@supports not</code> 陷阱</td>
+          <td class="loc">index:277-282</td>
+          <td>IE 全系</td>
+          <td><strong>降级写法方向反了。</strong>当前是「默认 aspect-ratio + <code>@supports not</code> 兜底」。Chrome&lt;88 / Safari&lt;15 / FF&lt;89 能识别 <code>@supports</code>，走 padding hack，正常；<strong>但 IE11 连 <code>@supports</code> 都不支持，整个兜底块被丢弃 → 容器高度塌陷为 0 → 内部 <code>position:absolute</code> 的 iframe 完全不可见</strong>。首页视频区在 IE11 变成一片空白。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-03</td><td><span class="badge b1">P1</span></td>
+          <td>CSS <code>filter</code><br>（blur / brightness / saturate）</td>
+          <td class="loc">19 处<br>关键：404:64,80</td>
+          <td>IE 全系<br>（仅旧 DX <code>-ms-filter</code>）</td>
+          <td>404 页 <code>.wrap::before/::after</code> 是 <code>46vw</code>/<code>50vw</code> 的纯色圆，靠 <code>filter:blur(60px)</code> 柔化。<strong>IE11 无 CSS filter → 两个巨大硬边色块直接压在背景上</strong>，404 页视觉严重劣化。其余 17 处是 hover 的 <code>brightness()</code>，丢失后仅无悬停反馈。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-04</td><td><span class="badge b2">P2</span></td>
+          <td><code>backdrop-filter</code></td>
+          <td class="loc">index 10<br>download 10<br>404 6</td>
+          <td>IE 全系<br>Edge 12–16<br>Firefox ≤102<br>Chrome ≤75（需 flag）</td>
+          <td>模糊层消失，但半透明背景仍在 → <strong>文字依然可读</strong>，只是失去毛玻璃质感。Safari 9+ / Edge 17-18 需 <code>-webkit-</code> 前缀——<strong>本项目已带前缀，这两家正常</strong>。FireFox 102 及更早是最大受影响群体。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-05</td><td><span class="badge b2">P2</span></td>
+          <td><code>display:grid</code><br><code>grid-template-columns</code></td>
+          <td class="loc">index:256,276,379,380<br>download:220,330</td>
+          <td>IE 全系（仅旧 <code>-ms-grid</code>）<br>Android 4.4 WebView<br>旧 UC / QQ X5 内核</td>
+          <td>多列退化为<strong>单列堆叠</strong>：download 页三服卡片由横排变竖排，index 功能卡片由 2 列变 1 列。内容完整、链接可点，<strong>可接受降级</strong>。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-06</td><td><span class="badge b2">P2</span></td>
+          <td>flex 容器 <code>gap</code></td>
+          <td class="loc">30 处</td>
+          <td>IE 全系</td>
+          <td>IE11 的 flexbox（2012 旧草案）<strong>不支持 gap</strong>。后果：Hero 四个按钮紧挨、社交卡片贴在一起、导航内元素无间距、macOS 红黄绿灯三圆贴死。<strong>视觉上最容易一眼看出的 IE 特征。</strong></td>
+        </tr>
+        <tr>
+          <td class="k">CSS-07</td><td><span class="badge b3">P3</span></td>
+          <td><code>min()</code> / <code>max()</code></td>
+          <td class="loc">6 处<br>index:146,158,306<br>download:141,153,284</td>
+          <td>Chrome &lt;79<br>Safari &lt;13.1 / FF &lt;75</td>
+          <td><code>.nav</code> 的 <code>width</code> 声明被丢弃 → 退化为 auto 宽度（导航变宽）。不影响可用性。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-08</td><td><span class="badge b3">P3</span></td>
+          <td><code>clamp()</code></td>
+          <td class="loc">9 处<br>index:186,190,254…<br>download:215,219</td>
+          <td>Chrome &lt;79<br>Safari &lt;13.1 / FF &lt;75</td>
+          <td>字号回退到 UA 默认值（h1 约 2em）。流式排版失效，但文字正常显示。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-09</td><td><span class="badge b3">P3</span></td>
+          <td><code>position:sticky</code></td>
+          <td class="loc">index:318<br>download:294</td>
+          <td>IE 全系</td>
+          <td>TOS 长弹窗滚动时，标题栏与关闭按钮随内容滚走。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-10</td><td><span class="badge b3">P3</span></td>
+          <td><code>mix-blend-mode</code><br><code>mask-image</code></td>
+          <td class="loc">404:120,121,122</td>
+          <td>IE 全系</td>
+          <td>404 页扫光高亮无羽化，显示为普通半透明白带。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-11</td><td><span class="badge b3">P3</span></td>
+          <td><code>prefers-reduced-motion</code></td>
+          <td class="loc">index:465<br>download:376</td>
+          <td>IE 全系<br>Safari &lt;10.1</td>
+          <td>无法响应系统「减少动态效果」偏好，<strong>所有动画照常播放</strong>。属于无障碍缺陷而非渲染问题。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-12</td><td><span class="badge b3">P3</span></td>
+          <td><code>scroll-behavior:smooth</code></td>
+          <td class="loc">index:82<br>download:78</td>
+          <td>IE 全系<br>Safari &lt;15.4</td>
+          <td>锚点跳转（#features / #contact）为瞬移而非平滑滚动。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-13</td><td><span class="badge b3">P3</span></td>
+          <td><code>@media (hover:none)</code></td>
+          <td class="loc">index:453<br>download:366</td>
+          <td>IE 全系</td>
+          <td>IE11 不支持该媒体查询 → 保留 hover 样式。IE11 是桌面浏览器，<strong>这反而是期望行为</strong>，无实际影响。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-14</td><td><span class="badge b3">P3</span></td>
+          <td>SVG <code>feTurbulence</code> 噪点</td>
+          <td class="loc">index:114<br>download:109</td>
+          <td>IE 全系</td>
+          <td>磨砂质感的噪点层（data-URI SVG）在 IE11 渲染不稳定。已正确把 <code>#</code> 编码为 <code>%23</code>，属加分项。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-15</td><td><span class="badge b3">P3</span></td>
+          <td><code>will-change</code></td>
+          <td class="loc">3 处</td>
+          <td>IE 全系</td>
+          <td>忽略即可，无副作用。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-16</td><td><span class="badge bok">通过</span></td>
+          <td><code>100svh</code></td>
+          <td class="loc">index:177</td>
+          <td>—</td>
+          <td><strong>渐进增强写法正确</strong>：先声明 <code>min-height:100vh</code>，再用 <code>100svh</code> 覆盖。老内核自动用 100vh。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-17</td><td><span class="badge bok">通过</span></td>
+          <td><code>env(safe-area-inset-*)</code></td>
+          <td class="loc">index:441,442<br>download:362</td>
+          <td>—</td>
+          <td>不支持时<strong>整条声明被丢弃</strong>，自动回退到基础规则中的 <code>bottom:22px</code> / <code>padding-bottom:100px</code>。<strong>降级路径干净。</strong></td>
+        </tr>
+        <tr>
+          <td class="k">CSS-18</td><td><span class="badge bok">通过</span></td>
+          <td><code>background-clip:text</code><br>+ <code>-webkit-text-fill-color</code></td>
+          <td class="loc">index:188<br>download:217</td>
+          <td>—</td>
+          <td>这是最容易踩的坑（Chrome 只认 <code>-webkit-</code> 前缀，漏写会导致渐变标题<strong>完全隐形</strong>）。<strong>本项目两个前缀都写了，安全。</strong>IE11 两者都不支持 → 显示实色文字，属自然降级。</td>
+        </tr>
+        <tr>
+          <td class="k">CSS-19</td><td><span class="badge bok">通过</span></td>
+          <td><code>::before</code> / <code>::after</code><br>双冒号</td>
+          <td class="loc">30 处</td>
+          <td>仅 IE8</td>
+          <td>IE9+ 原生支持双冒号。仅当目标降到 IE8 才需改写为单冒号——<strong>不建议为 IE8 投入</strong>。</td>
+        </tr>
+      </tbody>
+    </table></div>
+
+    <div class="note warn">
+      <div class="t">CSS-01 的修复成本被高估了</div>
+      <p>225 处 <code>var()</code> 看着吓人，但<strong>不需要逐处改</strong>。两种低成本做法任选：<br>
+      ① <strong>静态回退值</strong>——在影响可读性的关键声明前补一行静态值（CSS 解析规则天然支持，新浏览器用后者覆盖）：约 20 处，IE11 立即得到「深色实底 + 白字 + 直角」的可读页面。<br>
+      ② <strong>IE 专属兜底块</strong>——用 <code>@media all and (-ms-high-contrast:none), (-ms-high-contrast:active){ :root{...实色覆盖...} }</code>（IE10/11 专属 hack），一处覆盖全部 token，改动量最小且不动主样式。</p>
+    </div>
+
+    <h3>4.1 关键修复代码</h3>
+<pre><span class="c">/* ── CSS-02：把兜底方向反过来（渐进增强，而非回退补丁）── */</span>
+<span class="r">- .video-frame{ aspect-ratio:16/9 }</span>
+<span class="r">- @supports not (aspect-ratio:16/9){ .video-frame{aspect-ratio:auto;padding-top:56.25%} }</span>
+<span class="g">+ .video-frame{ padding-top:56.25% }                     <span class="c">/* 默认 hack，IE11 也能吃到 */</span></span>
+<span class="g">+ @supports (aspect-ratio:16/9){                          <span class="c">/* 支持者升级 */</span></span>
+<span class="g">+   .video-frame{ aspect-ratio:16/9; padding-top:0 }</span>
+<span class="g">+ }
+<span class="c">/* 为什么必须这样：@supports 写的兜底，救不了不支持 @supports 的浏览器。 */</span></span>
+
+<span class="c">/* ── CSS-01：IE10/11 专属兜底（一处覆盖全部 token，不动主样式）── */</span>
+<span class="g">+ @media all and (-ms-high-contrast:none), (-ms-high-contrast:active){
++   :root{
++     --bg-base:#0b0c12; --text-1:#f2f3f7; --text-2:#a9adba; --text-3:#878c9c;
++     --glass-bg:#14161f; --glass-bg-strong:#1c1f2b;        <span class="c">/* 半透明→实色 */</span>
++     --blur:none;                                          <span class="c">/* 关掉滤镜 */</span>
++     --radius-xl:12px; --radius-lg:10px; --radius-pill:999px;
++     --font-sans:"Microsoft YaHei","Segoe UI",sans-serif;   <span class="c">/* 补回字体栈 */</span>
++   }
++ }</span>
+<span class="c">/* 关键 token 也可直接在原声明前加静态回退（双保险）： */</span>
+<span class="g">+ body{ background:#0b0c12; background:var(--bg-base); color:#f2f3f7; color:var(--text-1); }</span>
+
+<span class="c">/* ── CSS-03：404 页改用径向渐变柔化，摆脱对 filter 的依赖 ── */</span>
+<span class="r">- .wrap::before{ width:46vw;height:46vw; filter:blur(60px);
+-   background:radial-gradient(circle, rgba(108,142,247,.55), rgba(108,142,247,0) 70%); }</span>
+<span class="g">+ .wrap::before{ width:92vw;height:92vw;                   <span class="c">/* 放大 + 渐变自然羽化 */</span></span>
+<span class="g">+   background:radial-gradient(circle, rgba(108,142,247,.42) 0%,
++              rgba(108,142,247,.16) 34%, rgba(108,142,247,0) 62%); }</span>
+
+<span class="c">/* ── CSS-06：flex gap → 相邻兄弟 margin（IE11 可识别）── */</span>
+<span class="g">+ .hero-actions > * + *{ margin-left:14px }
++ .nav > * + *{ margin-left:16px }
++ .social-stack > * + *{ margin-top:22px }
++ .traffic > * + *{ margin-left:8px }</span>
+<span class="c">/* gap 保留不动：新版浏览器用 gap，IE11 忽略 gap 但吃 margin，互不干扰 */</span></pre>
+  </section>
+
+  <!-- ============ 5 HTML / 基础设施 ============ -->
+  <section id="html">
+    <h2 class="sec">5 · HTML 与基础设施</h2>
+    <p class="sub">6 条。含一处容易被忽略、但会毁掉整个 IE 兼容工作的配置项。</p>
+
+    <div class="tw"><table>
+      <thead><tr><th>ID</th><th>级别</th><th>项</th><th>位置</th><th>受影响</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">HTML-01</td><td><span class="badge b2">P2</span></td>
+          <td><strong>缺 <code>X-UA-Compatible</code></strong></td>
+          <td class="loc">index.html<br>download.html<br>（404.html 已有）</td>
+          <td>IE 全系</td>
+          <td><strong>这是本次最不该漏的一条。</strong>没有该 meta 时，IE 可能落入<strong>兼容性视图 / 企业模式</strong>——此时文档模式会降到 <strong>IE7/IE8</strong>，届时 HTML5 语义标签、<code>::before</code>、flexbox、<code>var()</code> 全部失效，页面近乎全崩。<strong>前面所有 CSS 修复都会因此白做。</strong>404.html:4 已正确声明，另两页漏了。</td>
+        </tr>
+        <tr>
+          <td class="k">DEP-03</td><td><span class="badge b1">P1</span></td>
+          <td>YouTube iframe 无兜底</td>
+          <td class="loc">index:571</td>
+          <td>IE11<br>大陆用户全部</td>
+          <td>YouTube 官方自 2020 年起<strong>不再支持 IE11</strong>，老内核上嵌入播放器直接显示"浏览器不受支持"。叠加既往已记录的问题：大陆用户访问 youtube.com 不可达 → <strong>首页核心展示区对这两类用户同时是一片空白，且没有任何降级提示。</strong></td>
+        </tr>
+        <tr>
+          <td class="k">DEP-04</td><td><span class="badge b2">P2</span></td>
+          <td>外链目标站现状复核</td>
+          <td class="loc">index:487,507,515<br>download:420,438,456</td>
+          <td>全平台</td>
+          <td>顺带复核既往 P0，<strong>状态未改善</strong>：<code>pay.paomfz.com</code>（导航 + Hero 两个 Purchase 按钮）仍返回 <strong>403</strong>；<code>mall.909net.cn</code>（Hero 店铺按钮）仍<strong>不可达</strong>。与兼容性无关，但主转化路径依旧断裂。</td>
+        </tr>
+        <tr>
+          <td class="k">DEP-05</td><td><span class="badge bok">通过</span></td>
+          <td>TLS 握手兼容性<br>（实测）</td>
+          <td class="loc">站点层</td>
+          <td>—</td>
+          <td>实测 <code>--tls-max 1.0 / 1.1 / 1.2</code> <strong>三种均返回 200</strong>。这意味着 Win7 上的 IE11（默认不启用 TLS 1.2）<strong>也能正常握手</strong>——老浏览器兼容性没有传输层障碍。<br><strong>但反过来是个安全弱点</strong>：Cloudflare 最低 TLS 版本仍停在 <strong>1.0</strong>，PCI DSS 与现代基线均要求 ≥1.2。建议面板里提到 1.2，代价是彻底放弃 Win7/IE11。</td>
+        </tr>
+        <tr>
+          <td class="k">DEP-06</td><td><span class="badge b2">P2</span></td>
+          <td>CDN 边缘节点再次漂移</td>
+          <td class="loc">站点层</td>
+          <td>全平台</td>
+          <td>本次实测 <code>x-github-edge-region: sea</code>（西雅图）+ <code>X-Served-By: cache-lax-*</code>（洛杉矶）。对照既往记录：<strong>08-29 东京（HKG/NRT）→ 08-31 孟买（DEL/BOM）→ 09-02 美西（sea/LAX），三次三种落点。</strong>调度极不稳定，对中文用户延迟不利。仓库侧无法修复，只能迁 Cloudflare Pages / R2 缩短回源。</td>
+        </tr>
+        <tr>
+          <td class="k">DEP-07</td><td><span class="badge b3">P3</span></td>
+          <td>无统计埋点</td>
+          <td class="loc">三页均无</td>
+          <td>—</td>
+          <td><strong>没有任何 GA / umami / 自建埋点。</strong>这直接导致无法量化"老内核用户到底占多少"，兼容性投入只能靠猜。建议先去 Cloudflare 面板导出 UA 分布，再决定要不要为 IE11 投入。</td>
+        </tr>
+        <tr>
+          <td class="k">HTML-02</td><td><span class="badge b2">P2</span></td>
+          <td><code>target="_blank"</code> 缺 <code>rel="noopener"</code></td>
+          <td class="loc">10 处<br>index 6 / download 4</td>
+          <td>老内核更危险</td>
+          <td>兼容性视角：<code>rel="noopener"</code> 在 IE11 / 旧 Safari 上<strong>本身就不被支持</strong>，意味着这些浏览器无法通过该属性获得反向标签劫持防护，风险敞口更大。建议同时补 <code>rel="noopener noreferrer"</code>（新内核生效）+ 外链统一走中间跳转页（老内核兜底）。</td>
+        </tr>
+        <tr>
+          <td class="k">HTML-03</td><td><span class="badge bok">通过</span></td>
+          <td>HTML5 语义标签</td>
+          <td class="loc">21 处</td>
+          <td>仅 IE8</td>
+          <td><code>&lt;main&gt;/&lt;nav&gt;/&lt;article&gt;/&lt;section&gt;/&lt;header&gt;/&lt;footer&gt;</code> 在 IE9+ 原生支持，<strong>无需 html5shiv</strong>（前提是已按 HTML-01 锁定 IE=edge 文档模式）。</td>
+        </tr>
+        <tr>
+          <td class="k">HTML-04</td><td><span class="badge bok">通过</span></td>
+          <td>SVG <code>xlink:href</code></td>
+          <td class="loc">404:293</td>
+          <td>—</td>
+          <td>404 页的 <code>&lt;use&gt;</code> 使用了 <code>xlink:href</code> 而非 SVG2 的 <code>href</code>。<strong>旧 WebKit 只认 xlink</strong>，这个写法是对的。</td>
+        </tr>
+      </tbody>
+    </table></div>
+
+<pre><span class="c">&lt;!-- HTML-01：补到 index.html / download.html 的 &lt;head&gt; 最前面（charset 之后即可）--&gt;</span>
+<span class="r">- &lt;meta charset="UTF-8"&gt;</span>
+<span class="r">- &lt;meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"&gt;</span>
+<span class="g">+ &lt;meta charset="UTF-8"&gt;</span>
+<span class="g">+ &lt;meta http-equiv="X-UA-Compatible" content="IE=edge"&gt;   <span class="c">&lt;!-- 必须在其他元素之前 --&gt;</span></span>
+<span class="g">+ &lt;meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"&gt;</span>
+
+<span class="c">&lt;!-- DEP-03：YouTube iframe 加降级兜底 --&gt;</span>
+<span class="g">+ &lt;div class="video-frame glass reveal"&gt;
++   &lt;iframe src="https://www.youtube.com/embed/..." ...&gt;&lt;/iframe&gt;
++   &lt;noscript&gt;
++     &lt;a class="btn btn-glass" href="https://www.youtube.com/watch?v=Mr6FaTdi9As" target="_blank"
++        rel="noopener noreferrer"&gt;前往 YouTube 观看&lt;/a&gt;
++   &lt;/noscript&gt;
++ &lt;/div&gt;</span>
+<span class="c">/* 更进一步：用 JS 探测 iframe 是否加载成功（onerror / 超时），失败则替换为静态封面+外链。
+   这同时解决 IE11 不支持 与 大陆不可达 两个场景。 */</span></pre>
+  </section>
+
+  <!-- ============ 6 浏览器矩阵 ============ -->
+  <section id="matrix">
+    <h2 class="sec">6 · 逐浏览器降级矩阵</h2>
+    <p class="sub">"可用度"＝内容可读性 + 核心转化路径（下载 / 购买）可达性 + 视觉保真度的综合判断。</p>
+
+    <div class="tw"><table class="mx">
+      <thead><tr><th>浏览器 / 内核</th><th>可用度</th><th>核心症状（按影响排序）</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>IE11<br><span style="font-weight:400;color:#767d90;font-size:12px">Trident 7.0</span></td>
+          <td><span class="pct lo">35%</span></td>
+          <td>① var() 全废 → 白底黑字直角宋体，玻璃质感归零（CSS-01）；② 视频区高度塌陷为 0（CSS-02）；③ 整卡下载点击抛错失效（JS-03）；④ 返回顶部按钮永不出现（JS-02）；⑤ 导航条滚动时高频闪烁（JS-04）；⑥ Esc 关窗失效（JS-05）；⑦ flex gap 全丢，元素挤在一起（CSS-06）；⑧ grid → 单列堆叠（CSS-05）；⑨ YouTube 提示不支持（DEP-03）；⑩ 若落入兼容性视图则近乎全崩（HTML-01）。<strong>内容可读、下载链接可点，但视觉与交互严重受损。</strong></td>
+        </tr>
+        <tr>
+          <td>EdgeHTML 12–14<br><span style="font-weight:400;color:#767d90;font-size:12px">Edge 旧内核</span></td>
+          <td><span class="pct mid">60%</span></td>
+          <td>与 IE11 高度重叠：<strong>同样不支持 CSS 自定义属性</strong>（Edge 15 才支持）→ var() 全废；<code>closest</code> 不支持（15 才支持）→ 整卡下载失效；<code>backdrop-filter</code> 不支持（17 才支持）。比 IE11 好的地方：<code>scrollY</code> 支持、<code>grid</code> 部分支持。<strong>常被遗漏的一个群体。</strong></td>
+        </tr>
+        <tr>
+          <td>EdgeHTML 15–18<br><span style="font-weight:400;color:#767d90;font-size:12px">Edge 旧内核</span></td>
+          <td><span class="pct hi">82%</span></td>
+          <td>var() ✓、closest ✓、grid ✓。<strong>剩 Esc 键返回 'Esc' 导致弹窗关不掉</strong>（JS-05）；Edge 15-16 无 backdrop-filter（17+ 带前缀可用）；gap / clamp / min 缺失导致间距与字号偏差。整体可用。</td>
+        </tr>
+        <tr>
+          <td>旧 WebKit<br><span style="font-weight:400;color:#767d90;font-size:12px">Safari 9–12 / iOS 9–12</span></td>
+          <td><span class="pct hi">90%</span></td>
+          <td><code>backdrop-filter</code> 带 <code>-webkit-</code> 前缀可用 ✓（本项目已带）；<code>@supports</code> 支持 → aspect-ratio 降级正常 ✓；<strong>主要缺失 clamp()/min()（Safari 13.1 才支持）→ 字号回退</strong>；Safari 12.0 无 IntersectionObserver → 走 else 分支全部显示 ✓（降级正确）。整体良好。</td>
+        </tr>
+        <tr>
+          <td>旧 Firefox<br><span style="font-weight:400;color:#767d90;font-size:12px">Firefox ≤102（Gecko）</span></td>
+          <td><span class="pct hi">93%</span></td>
+          <td><strong>唯一实质问题：backdrop-filter 不支持（103 起才默认启用）</strong> → 失去毛玻璃，但半透明背景仍在，文字清晰可读。其余：aspect-ratio（89 起）有 @supports 兜底 ✓、clamp/min（75 起）回退、grid/flex 全支持。<strong>是"看起来少了点质感，但完全好用"的典型。</strong></td>
+        </tr>
+        <tr>
+          <td>旧 Chromium<br><span style="font-weight:400;color:#767d90;font-size:12px">Chrome 49–78</span></td>
+          <td><span class="pct hi">93%</span></td>
+          <td>backdrop-filter 76 起（47–75 需 flag）→ 老版本无模糊；clamp/min 79 起 → 字号回退；aspect-ratio 88 起但有 @supports 兜底 ✓。<strong>与 Firefox 情况对称，影响限于视觉质感。</strong></td>
+        </tr>
+        <tr>
+          <td>老旧 Android WebView<br><span style="font-weight:400;color:#767d90;font-size:12px">UC / QQ / X5（Chrome 30–57 内核）</span></td>
+          <td><span class="pct mid">55%</span></td>
+          <td><strong>这很可能是你们真实的最大老内核群体。</strong>grid 不支持（Chrome 57 起）→ 布局堆叠；backdrop-filter 不支持；clamp/min 不支持；自定义属性 Chrome 49 起——<strong>低于 49 的内核会复现 IE11 同款 var() 崩塌</strong>；IntersectionObserver 不支持 → 走 else 全显示 ✓。且国内 ROM 的 X5 内核行为与标准 Chrome 存在额外差异。</td>
+        </tr>
+        <tr>
+          <td>Opera Mini</td>
+          <td><span class="pct lo">30%</span></td>
+          <td>服务端转码渲染模式，几乎所有滤镜、动画、自定义属性失效，JS 能力受限。<strong>建议直接放弃，不做投入。</strong></td>
+        </tr>
+      </tbody>
+    </table></div>
+
+    <div class="note warn">
+      <div class="t">请优先关注矩阵的后两行，而不是第一行</div>
+      <p>本站用户是越南 / 菲律宾 / 欧美的 CrossFire 玩家。这个群体的设备画像决定了：<strong>IE11 的实际占比大概率低于 0.1%，而东南亚中低端 Android 机上的 UC / QQ / X5 内核可能占到 5–15%。</strong>换句话说，<strong>为 IE11 投入两周改造，可能覆盖不到千分之一的用户；而把 Chrome 49 以下内核的 var() 崩塌修掉，覆盖的可能是十分之一。</strong><br>
+      所以修复顺序建议是：<strong>先修「跨内核通杀」的根因项</strong>（CSS-01 的 var 兜底、JS-03 的 closest、JS-02 的 scrollY、CSS-02 的 aspect-ratio 方向），这些改动<strong>同时惠及 IE11、EdgeHTML、旧 X5 内核</strong>，一份投入三处收益；<strong>再评估是否为 IE11 单独补 gap / grid / filter</strong>。<br>
+      <strong>但 DEP-07 说得很清楚：站点没有任何统计埋点，以上全是推断。动手前请先去 Cloudflare 面板导出一份 UA 分布——这一步只要 5 分钟，能让后面所有决策从"猜"变成"算"。</strong></p>
+    </div>
+  </section>
+
+  <!-- ============ 7 方案 ============ -->
+  <section id="plan">
+    <h2 class="sec">7 · 修复与降级方案</h2>
+    <p class="sub">四个方案，按推荐度排序。A 是主菜，D 是无论如何都该做的保底。</p>
+
+    <div class="plan">
+      <div class="plan-h">
+        <span class="tag t-rec">推荐</span>
+        <span class="ttl">方案 A · 渐进增强改写（零构建，纯手工）</span>
+        <span class="cost">约 2 小时 · 覆盖 6 条 P1 中的 5 条</span>
+      </div>
+      <div class="plan-b">
+        <p style="margin-bottom:10px">核心思路：<strong>把「现代特性 + 兜底补丁」的写法，统一改成「基础写法 + 现代特性升级」</strong>。前者在不认识兜底语法的浏览器上等于没兜底，后者天然安全。</p>
+        <ol>
+          <li><strong>HTML-01</strong>：给 index / download 补 <code>X-UA-Compatible</code>（2 行，5 分钟）。<strong>必须最先做</strong>，否则 IE 落入兼容性视图会让后续所有修复失效。</li>
+          <li><strong>CSS-01</strong>：加 IE10/11 专属 <code>@media -ms-high-contrast</code> 兜底块，把关键 token 覆盖为实色；再给 <code>body</code> / <code>.glass</code> / <code>.btn-primary</code> 等约 20 处关键声明补静态回退值。</li>
+          <li><strong>CSS-02</strong>：<code>aspect-ratio</code> 与 <code>@supports</code> 对调方向，默认 padding hack，<code>@supports</code> 内升级。</li>
+          <li><strong>JS-02 / JS-03 / JS-04 / JS-05 / JS-06</strong>：套用第 3.1 节的 20 行兜底代码（scrollTop helper + closest polyfill + add/remove + key 归一化 + scrollTo 数值化）。</li>
+          <li><strong>CSS-03</strong>：404 页两个大圆改径向渐变，摆脱 <code>filter</code> 依赖。</li>
+          <li><strong>CSS-06</strong>：约 6 处关键容器补相邻兄弟 margin（gap 保留不动，新旧互不干扰）。</li>
+          <li><strong>DEP-03</strong>：YouTube iframe 加 <code>&lt;noscript&gt;</code> 外链兜底 + 加载失败探测。</li>
+        </ol>
+        <p style="margin:10px 0 0"><strong>收益</strong>：IE11 可用度 35% → 约 75%；EdgeHTML 12-14 60% → 约 85%；旧 X5 内核 55% → 约 80%。<strong>且不引入任何外部依赖，保住「单文件自包含」的项目特性。</strong></p>
+      </div>
+    </div>
+
+    <div class="plan">
+      <div class="plan-h">
+        <span class="tag t-alt">可选</span>
+        <span class="ttl">方案 B · 内联 micro-polyfill</span>
+        <span class="cost">约 1 小时 · 与方案 A 的 JS 部分二选一</span>
+      </div>
+      <div class="plan-b">
+        <p>把 <code>closest</code> / <code>scrollY</code> / <code>classList.toggle</code> 修正 / <code>key</code> 归一化打包成一个约 3KB 的内联脚本，放在两页 IIFE 之前。</p>
+        <div class="note bad" style="margin:10px 0 0">
+          <div class="t">不要引入 polyfill.io 之类的公共 CDN</div>
+          <p>三个理由：① 会引入<strong>第三方运行时依赖</strong>，摧毁本项目「零外部依赖」的核心优势；② polyfill.io 域名发生过供应链安全事故且已易主，属已知风险源；③ 多一次 RTT，对东南亚移动网络不友好。<strong>需要补的东西请一律内联。</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="plan">
+      <div class="plan-h">
+        <span class="tag t-no">不建议</span>
+        <span class="ttl">方案 C · 构建期转译（引入 Babel / PostCSS）</span>
+        <span class="cost">投入大 · 收益低 · 有副作用</span>
+      </div>
+      <div class="plan-b">
+        <p><strong>明确不建议。</strong>理由：</p>
+        <ul>
+          <li><strong>JS 侧本来就不需要</strong>——扫描确认 ES6+ 语法命中 0 处，Babel 无的放矢。</li>
+          <li><strong>CSS 侧解决不了真问题</strong>——autoprefixer 能补浏览器前缀（本项目前缀已经写得不错），但<strong>补不了 <code>var()</code>、补不了 <code>grid</code>、补不了 IE 私有语法</strong>。而 IE11 最大的坑恰恰是 var()。</li>
+          <li><strong>会摧毁项目优势</strong>——引入构建会打破「35KB 单文件、直接丢到任何静态托管就能跑」的现状，而这个特性对一个小团队维护的静态站价值很高。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="plan">
+      <div class="plan-h">
+        <span class="tag t-rec">保底</span>
+        <span class="ttl">方案 D · 明确放弃 + 友好提示</span>
+        <span class="cost">15 分钟 · 无论选哪个方案都建议做</span>
+      </div>
+      <div class="plan-b">
+        <p>如果评估后决定不为 IE11 投入，那<strong>至少不要让用户面对一个无法解释的破碎页面</strong>。加一段 UA 检测，在老内核顶部显示提示条：把"不知道为什么坏了"变成"我知道这是怎么回事"。</p>
+<pre style="margin:10px 0 0"><span class="c">// 放在 &lt;body&gt; 最前，同步执行避免闪烁</span>
+<span class="b">if</span> (/MSIE |Trident\//.test(navigator.userAgent)) {
+  document.write(
+    <span class="y">'&lt;div style="padding:10px 16px;background:#ffb340;color:#1a1d24;'</span> +
+    <span class="y">'font:14px/1.5 sans-serif;text-align:center;position:relative;z-index:999"&gt;'</span> +
+    <span class="y">'当前浏览器版本过旧，部分视觉效果与交互可能不可用。'</span> +
+    <span class="y">'建议使用 Chrome / Edge / Firefox 最新版。&lt;/div&gt;'</span>
+  );
+}
+<span class="c">// 说明：IE11 的 UA 含 "Trident/7.0"，IE10 及更早含 "MSIE "。
+// 若目标是国内 X5 内核，可再补 /QQBrowser|UCBrowser/ 检测并给不同文案。</span></pre>
+        <p style="margin:10px 0 0">成本极低，但把最糟的结果——<strong>用户困惑地关掉页面</strong>——变成了<strong>用户理解情况并自行切换浏览器</strong>。这一条的性价比高于本报告里的大部分修复项。</p>
+      </div>
+    </div>
+
+    <h3>7.1 执行顺序建议</h3>
+    <div class="tw"><table>
+      <thead><tr><th>批次</th><th>项</th><th>工时</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td class="k">第 0 批<br>（先做这个）</td><td><strong>DEP-07</strong>：查 Cloudflare UA 分布</td><td>5 分钟</td><td>在不知道老内核占比之前，任何投入排序都是猜。这一步决定后面要不要做、做多少。</td></tr>
+        <tr><td class="k">第 1 批</td><td>HTML-01 · JS-03 · JS-02 · CSS-02</td><td>40 分钟</td><td>四个"跨内核通杀"项。<strong>都是一份投入同时惠及 IE11 / EdgeHTML / 旧 X5</strong>，且 JS-03 是当前唯一会造成功能彻底失效的问题。</td></tr>
+        <tr><td class="k">第 2 批</td><td>CSS-01 · 方案 D 提示条</td><td>50 分钟</td><td>var() 兜底解决最大面积的视觉崩塌；提示条为极小成本保底。</td></tr>
+        <tr><td class="k">第 3 批</td><td>JS-04 · JS-05 · JS-06 · CSS-03 · CSS-06</td><td>45 分钟</td><td>IE11 专属体验项。若 UA 数据显示 IE 占比极低，可延后或不做。</td></tr>
+        <tr><td class="k">第 4 批</td><td>DEP-03 · CSS-04 · CSS-05 · HTML-02</td><td>40 分钟</td><td>YouTube 兜底（同时解决大陆用户问题，价值最高）与其余 P2。</td></tr>
+        <tr><td class="k">不排期</td><td>全部 P3（12 条）</td><td>—</td><td>均为自然降级，用户基本无感。</td></tr>
+        <tr><td class="k">另案处理</td><td>DEP-04（pay 403 / mall 不可达）<br>DEP-06（CDN 漂移）<br>DEP-05 安全面（TLS 1.0）</td><td>—</td><td>不属于兼容性范畴，但是转化路径与基础设施上的真实问题，建议另开议题。</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ============ 8 回归 ============ -->
+  <section id="regress">
+    <h2 class="sec">8 · 回归与持续保障</h2>
+    <p class="sub">兼容性不是一次性工程，改版很容易把已修的项重新踩回去。</p>
+    <ul>
+      <li><strong>复用扫描脚本</strong>：<code>.workbuddy/tmp/compat_scan.py</code>（52 条规则）可在每次改版后重跑，比对命中项增量。建议纳入改动清单，或直接挂到 CI 上做 warning 级检查。</li>
+      <li><strong>本次新发现的既往回归线索</strong>：音乐自动播放（既往记录的 P0）在 <code>index.html:775-776</code> 依旧在线，且 <code>preload='auto'</code> 会让 3.1MB mp3 在首屏就拉取——<strong>这一点在老内核与东南亚弱网环境下尤其致命</strong>（IE11 会完整下载 3.1MB 后才可能播放）。建议顺手改回懒加载。</li>
+      <li><strong>两条通用规则值得写进约定</strong>：① <strong>任何 <code>@supports not</code> 写的兜底都要反问一句"不支持 @supports 的浏览器怎么办"</strong>；② <strong>任何 <code>var()</code> 声明都要问一句"这条丢了页面还能读吗"</strong>——如果答案是否，就补静态回退值。</li>
+      <li><strong>版本基线建议（待 UA 数据确认后调整）</strong>：核心保障 Chrome 60+ / Safari 12+ / Firefox 78+ / Edge 79+；尽力而为 Chrome 49–59 / Safari 9–11 / Firefox 52–77 / EdgeHTML 15–18 / IE11；明确放弃 IE10 及以下、Opera Mini。</li>
+    </ul>
+
+    <div class="note">
+      <div class="t">一句话总结</div>
+      <p><strong>JS 干净得超出预期（零 ES6 语法，无需转译），CSS 的问题看似很多实则收敛到一个根因（var），真正需要立刻动手的只有 4 项。</strong>但在动手之前，先花 5 分钟去看一眼 UA 分布——因为你大概率会发现，"老旧内核"在你们的用户群里指的不是 IE。</p>
+    </div>
+  </section>
+
+  <footer>
+    PaoMian Hax 老旧浏览器内核兼容性评估报告 v1 · 2026-09-02 · 扫描脚本 <code>.workbuddy/tmp/compat_scan.py</code><br>
+    支持度结论经 MDN / caniuse 逐一核对；TLS 与响应头数据为 2026-09-02 对 <code>https://www.paomfz.com/</code> 的实测结果。
+  </footer>
+
+</div>
+</body>
+</html>

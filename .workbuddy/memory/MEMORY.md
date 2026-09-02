@@ -3,14 +3,15 @@
 ## 项目概述
 PaoMian Hax（泡面辅助）官网，提供 CrossFire（穿越火线）游戏第三方辅助工具下载。
 域名：www.paomfz.com，纯静态网站，无后端。
-### 部署架构（2026-08-31 实测复核，架构结论不变）
+### 部署架构（2026-09-02 实测复核，架构结论不变）
 **用户 → Cloudflare（DNS + 反向代理）→ 回源 GitHub Pages（Fastly）**
 - 铁证：`X-GitHub-Request-Id` + `x-github-edge-region` + `Via: 1.1 varnish` + `X-Served-By: cache-*` + `X-Fastly-Request-ID`。这套组合只有 GitHub Pages 会有
 - Cloudflare 上**无独立站点副本**，纯转发层
 - CI：`.github/workflows/deploy-pages.yml`，push main 触发；**实测提交后 59 秒完成部署，链路健康**
 - 08-28 的 v4 改版从未 commit，故从未上线 —— 「发布漂移 P0」**已于 2026-08-29 撤销**
 - ⚠ **P0 隐患未除**：CI 里有 `rm -f CNAME`，注释称"仅部署 github.io、保留 Cloudflare 主站"，但该前提不存在（主站就在 GH Pages）。每次部署都在删自定义域名凭证，随时可能解绑 → 全站 404
-- ⚠ **边缘节点漂移（2026-08-31）**：08-29 是 CF `HKG` + GH `japaneast` + Fastly `cache-nrt-*`（东京）；08-31 变成 CF `DEL` + GH `centralindia` + Fastly `cache-bom-*`（孟买）。东亚→南亚，中文用户延迟上升。属平台调度抖动，仓库侧无法修；若长期停留可考虑迁 Cloudflare Pages / R2 缩短回源
+- ⚠ **边缘节点漂移（3 次实测，调度极不稳定）**：08-29 CF `HKG` + GH `japaneast` + Fastly `cache-nrt-*`（东京）→ 08-31 CF `DEL` + GH `centralindia` + Fastly `cache-bom-*`（孟买）→ **09-02 GH `sea` + Fastly `cache-lax-*`（美西洛杉矶）**。东亚→南亚→美西，三次三落点，中文与东南亚用户延迟均受影响。属平台调度抖动，仓库侧无法修；若长期停留可考虑迁 Cloudflare Pages / R2 缩短回源
+- ⚠ **TLS 最低版本仍是 1.0（2026-09-02 实测）**：`--tls-max 1.0 / 1.1 / 1.2` 三种握手**全部返回 200**。兼容利好（Win7 IE11 也能连上），但安全弱点（PCI DSS 与现代基线要求 ≥1.2）。**在 Cloudflare 面板提到 1.2 = 主动放弃 Win7/IE11，需先确认 UA 占比再动**
 
 ### 待治理问题（完整版见 2026-08-31 分析报告 v4）
 - **P0-新（08-31）** 背景音乐自动播放**回归**：`index.html:740-742` 加载即 `initAudio(); tryPlay();`，且 `:714-720` 挂了 `document` 一次性 click 兜底 —— **点页面任意位置都会触发播放**；`preload='auto'` 使 3.1MB mp3 首屏即拉取。08-25 明确移除过，08-29 17:07 被加回且**已上线**。**回滚源**：`index.html.bak-20260829-1707`（"懶加載，默認關閉"版，已被 git 跟踪并推远端）

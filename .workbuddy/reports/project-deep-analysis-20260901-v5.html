@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaoMian Hax 项目深度分析 v5 — 2026-09-01</title>
+<style>
+  :root{
+    --bg:#0b0c12; --bg-2:#13141c; --glass:rgba(255,255,255,.055);
+    --glass-bd:rgba(255,255,255,.10); --text:#e8e9f0; --text-2:#9a9db5;
+    --text-3:#6b6d85; --accent:#7c5cff; --amber:#f5a623; --red:#ff5a5f;
+    --green:#3ddc97; --blue:#4dabf7; --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:40px 20px}
+  .wrap{max-width:960px;margin:0 auto}
+  h1{font-size:2rem;font-weight:700;margin-bottom:4px}
+  h1 .ver{color:var(--text-3);font-weight:400;font-size:1rem;margin-left:12px}
+  .sub{color:var(--text-2);font-size:.95rem;margin-bottom:32px}
+  .card{background:var(--glass);border:1px solid var(--glass-bd);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+  h2{font-size:1.25rem;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  h3{font-size:1.05rem;margin:18px 0 8px;color:var(--accent)}
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+  .badge-p0{background:rgba(255,90,95,.18);color:var(--red)}
+  .badge-p1{background:rgba(245,166,35,.18);color:var(--amber)}
+  .badge-p2{background:rgba(77,171,247,.18);color:var(--blue)}
+  .badge-ok{background:rgba(61,220,151,.18);color:var(--green)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.88rem}
+  th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--glass-bd)}
+  th{color:var(--text-2);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px}
+  td code{background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;font-size:.82rem}
+  .issue{border-left:3px solid var(--red);padding:10px 14px;margin:8px 0;background:rgba(255,90,95,.06);border-radius:0 8px 8px 0}
+  .issue.p1{border-color:var(--amber);background:rgba(245,166,35,.06)}
+  .issue.p2{border-color:var(--blue);background:rgba(77,171,247,.06)}
+  .issue .title{font-weight:600;margin-bottom:3px}
+  .issue .desc{font-size:.85rem;color:var(--text-2)}
+  ul{padding-left:20px;margin:6px 0}
+  li{margin:4px 0;font-size:.9rem}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr}}
+  .stat{text-align:center;padding:12px}
+  .stat .num{font-size:1.8rem;font-weight:700}
+  .stat .lbl{font-size:.78rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px}
+  .stat.p0 .num{color:var(--red)}
+  .stat.p1 .num{color:var(--amber)}
+  .stat.p2 .num{color:var(--blue)}
+  .stat.ok .num{color:var(--green)}
+  .timeline{position:relative;padding-left:24px}
+  .timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--glass-bd)}
+  .tl-item{position:relative;margin-bottom:12px;font-size:.85rem}
+  .tl-item::before{content:'';position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+  .tl-item .date{color:var(--text-3)}
+  .step{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--glass-bd);font-size:.85rem}
+  .step .n{color:var(--accent);font-weight:700;min-width:20px}
+  .tag{display:inline-block;padding:1px 8px;border-radius:4px;font-size:.72rem;margin-right:6px}
+  .tag-p0{background:var(--red);color:#fff}
+  .tag-p1{background:var(--amber);color:#000}
+  .tag-p2{background:var(--blue);color:#fff}
+  hr{border:none;border-top:1px solid var(--glass-bd);margin:24px 0}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>PaoMian Hax 项目深度分析 <span class="ver">v5 · 2026-09-01</span></h1>
+<p class="sub">纯静态官网 · CrossFire 第三方辅助工具 · 域名 paomfz.com · 全站线上实测 + 仓库审计</p>
+
+<!-- 概览 -->
+<div class="card">
+<h2>📊 项目概览</h2>
+<div class="grid2">
+  <div>
+    <h3>基本信息</h3>
+    <table>
+      <tr><th>项目名</th><td>PaoMian Hax（泡面辅助）</td></tr>
+      <tr><th>域名</th><td><code>www.paomfz.com</code></td></tr>
+      <tr><th>仓库</th><td><code>github.com/qqxiaochen/webw</code></td></tr>
+      <tr><th>技术栈</th><td>纯 HTML + CSS + JS，零外部依赖</td></tr>
+      <tr><th>部署</th><td>Cloudflare 代理 → GitHub Pages (Fastly)</td></tr>
+      <tr><th>提交数</th><td>76（其中 75 条 commit message 仅为「1」）</td></tr>
+    </table>
+  </div>
+  <div>
+    <h3>仓库体积</h3>
+    <table>
+      <tr><th>.git</th><td>1.5 GB</td></tr>
+      <tr><th>down/</th><td>130 MB（6 个 ZIP）</td></tr>
+      <tr><th>static/</th><td>3.9 MB</td></tr>
+      <tr><th>.workbuddy/</th><td>14 MB</td></tr>
+      <tr><th>loose objects</th><td>463 个，in-pack: 0（从未 gc）</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 统计 -->
+<div class="card">
+<h2>📈 问题统计</h2>
+  <div class="grid2">
+    <div class="stat p0"><div class="num">5</div><div class="lbl">P0 严重</div></div>
+    <div class="stat p1"><div class="num">12</div><div class="lbl">P1 高优先级</div></div>
+    <div class="stat p2"><div class="num">15</div><div class="lbl">P2 优化</div></div>
+    <div class="stat ok"><div class="num">3</div><div class="lbl">已确认正常</div></div>
+  </div>
+</div>
+
+<hr>
+
+<!-- P0 -->
+<div class="card">
+<h2>🔴 P0 — 严重问题（必须立即修复）</h2>
+
+<div class="issue">
+<div class="title">P0-1 · 背景音乐自动播放回归 <span class="tag tag-p0">已上线</span></div>
+<div class="desc">
+<code>index.html:740-742</code> 加载即执行 <code>initAudio(); tryPlay();</code>，且 <code>:714-720</code> 挂了 <code>document</code> 一次性 click 兜底 —— <strong>点击页面任意位置都会触发播放</strong>。<code>preload='auto'</code> 使 3.1MB mp3 首屏即拉取。08-25 曾明确移除，08-29 17:07 被加回。回滚源：<code>index.html.bak-20260829-1707</code>（「懶加載，默認關閉」版，已被 git 跟踪并推远端）。
+</div>
+</div>
+
+<div class="issue">
+<div class="title">P0-2 · pay.paomfz.com 返回 403 <span class="tag tag-p0">主转化路径断裂</span></div>
+<div class="desc">
+index 上 2 个 Purchase 按钮（导航 + Hero）全指向 <code>https://pay.paomfz.com/</code>，均返回 <strong>403 Forbidden</strong>（Cloudflare challenge 页面）。用户无法完成购买转化。
+</div>
+</div>
+
+<div class="issue">
+<div class="title">P0-3 · mall.909net.cn 不可达 <span class="tag tag-p0">Hero「店鋪」按钮目标</span></div>
+<div class="desc">
+<code>curl --max-time 5 https://mall.909net.cn/</code> 返回 000（连接超时/被屏蔽）。Hero「店鋪」按钮指向 <code>https://mall.909net.cn/links/629BA356</code>，同样不可达。
+</div>
+</div>
+
+<div class="issue">
+<div class="title">P0-4 · VN 下载死链 <span class="tag tag-p0">整卡可点击放大误触</span></div>
+<div class="desc">
+<code>download.html:418</code> → <code>/down/vn/PaoMianHax-Vn-211103-2(Pass123).zip</code> 线上 404，本地无 <code>down/vn/</code> 目录。<strong>整张卡片可点击</strong>（:605-611），误触面积大；且卡片标 <code>Updating</code> 却仍给可点下载按钮，状态与交互矛盾。
+</div>
+</div>
+
+<div class="issue">
+<div class="title">P0-5 · CI 隐患：rm -f CNAME <span class="tag tag-p0">随时可能全站 404</span></div>
+<div class="desc">
+<code>.github/workflows/deploy-pages.yml</code> 中有 <code>rm -f CNAME</code>，注释称「仅部署 github.io、保留 Cloudflare 主站」，但该前提不存在 —— 主站就在 GitHub Pages。每次部署都在删自定义域名凭证，随时可能解绑 → 全站 404。
+</div>
+</div>
+
+</div>
+
+<!-- P1 -->
+<div class="card">
+<h2>🟠 P1 — 高优先级问题</h2>
+
+<div class="issue p1">
+<div class="title">P1-1 · 10 个 target="_blank" 缺 rel="noopener noreferrer"</div>
+<div class="desc">index 6 个 + download 4 个。缺少 <code>rel="noopener noreferrer"</code> 会导致新窗口打开时原页面失去焦点、泄露 referrer、存在安全风险。
+</div>
+</div>
+
+<div class="issue p1">
+<div class="title">P1-2 · 死文件 69.0MB</div>
+<div class="desc"><code>down/ph/7A638484.zip</code> + <code>down/speed/</code>×3。<code>down/speed/</code> 三份 MD5 完全相同 <code>12042ea173</code>，同一文件复制三遍，纯浪费 25.4MB。在用仅 2 个（ph/9D759C3.zip 31.1MB + we/5C72CA.zip 29.1MB）。
+</div>
+</div>
+
+<div class="issue p1">
+<div class="title">P1-3 · CSS 重复 51%</div>
+<div class="desc">download 16,614 字符中 6,171 字符与 index 选择器+声明完全相同（64 同名 / 61 条一致）。建议抽 <code>static/site.css</code>，但会破坏「单文件自包含」特性，需权衡。
+</div>
+</div>
+
+<div class="issue p1">
+<div class="title">P1-4 · 404.html 缺 DOCTYPE（三页唯一）</div>
+<div class="desc">viewport 禁止缩放、<code>lang="en"</code> 但正文中文、用 h5 当主标题、0 处 aria-label、无 main/nav/footer。download.html 缺 h1。
+</div>
+</div>
+
+<div class="issue p1">
+<div class="title">P1-5 · 零安全响应头</div>
+<div class="desc">HSTS / CSP / XFO / XCTO / Referrer-Policy 全无。另存在非预期的 <code>Access-Control-Allow-Origin:*</code>。可在 Cloudflare 面板加响应头规则解决，无需改代码。
+</div>
+</div>
+
+<div class="issue p1">
+<div class="title">P1-6 · .git 1.5GB / 463 loose object / in-pack: 0</div>
+<div class="desc">从未 gc。55 个 &gt;1MB blob 合计 1433MB，46 个 &gt;25MB。<code>down/</code> 历史 47 个版本（ph 31 + we 15 + speed 1）。
+</div>
+</div>
+
+<div class="issue p1">
+<div class="title">P1-7 · index.html.bak-20260829-1707 被 git 跟踪并推远端</div>
+<div class="desc">根目录备份文件被提交并发布到线上，且线上可直接访问。<code>.gitignore</code> 未忽略 <code>*.bak*</code>。
+</div>
+</div>
+
+<div class="issue p1">
+<div class="title">P1-8 · robots.txt 是 Cloudflare 注入的 content-signals 模板</div>
+<div class="desc">返回 200 但 1248B 全注释，零有效规则。<code>sitemap.xml</code> 404。
+</div>
+</div>
+
+<div class="issue p1">
+<div class="title">P1-9 · 页脚 "since 2099" 占位文本未改（两页都有）</div>
+<div class="desc">明显占位符，暴露项目不成熟。
+</div>
+</div>
+
+<div class="issue p1">
+<div class="title">P1-10 · 支付渠道 mall.909net.cn（境内域名）与页脚 "Except China" 声明矛盾</div>
+<div class="desc">合规风险。且 index 页脚漏写 "(Except China)"，两页声明不一致。
+</div>
+</div>
+
+<div class="issue p1">
+<div class="title">P1-11 · 两页 Modal 无焦点陷阱</div>
+<div class="desc">打开后 Tab 可跑到背景内容，关闭后焦点不回原位。键盘与读屏用户完全不可达。
+</div>
+</div>
+
+<div class="issue p1">
+<div class="title">P1-12 · .dl-card 整卡 click 但无 role/tabindex/键盘事件</div>
+<div class="desc">键盘与读屏用户完全不可达。
+</div>
+</div>
+
+</div>
+
+<!-- P2 -->
+<div class="card">
+<h2>🔵 P2 — 优化项</h2>
+<div class="issue p2"><div class="title">P2-1 · YouTube iframe 硬编码，大陆用户白屏无兜底</div><div class="desc">无静态占位图或加载提示。</div></div>
+<div class="issue p2"><div class="title">P2-2 · Hero 四个按钮语义重叠</div><div class="desc">店鋪 / Purchase 都指向购买，且当前都不可用。</div></div>
+<div class="issue p2"><div class="title">P2-3 · download.html keywords 黑帽堆砌</div><div class="desc">index 20+ 重复变体，建议整行删除。</div></div>
+<div class="issue p2"><div class="title">P2-4 · .workbuddy/ 32 个文件被 git 跟踪</div><div class="desc">10 张截图 PNG + 6 tmp + 4 报告 + 6 memory 日志。.gitignore 漏了 reports/ 与 tmp/。</div></div>
+<div class="issue p2"><div class="title">P2-5 · git 提交信息 76 次中 75 次是「1」</div><div class="desc">无法追溯变更意图。本次音乐回归就是靠比对备份文件才定位到的。</div></div>
+<div class="issue p2"><div class="title">P2-6 · 404.html 仍是浅色 Apple Liquid Glass，与 v6 深色不同调</div><div class="desc">三页现不一致，需统一时另行改造。</div></div>
+<div class="issue p2"><div class="title">P2-7 · static/images/ 13 个文件（≈785KB）全部零引用</div><div class="desc"></div></div>
+<div class="issue p2"><div class="title">P2-8 · 边缘节点漂移（08-31 实测）</div><div class="desc">CF 从 HKG→DEL，GH 从 japaneast→centralindia，Fastly 从 cache-nrt-*→cache-bom-*。中文用户延迟上升。属平台调度抖动，仓库侧无法修。</div></div>
+<div class="issue p2"><div class="title">P2-9 · git 无 GPG 签名 / 无分支保护</div><div class="desc"></div></div>
+<div class="issue p2"><div class="title">P2-10 · 无 CI lint / 无自动化测试</div><div class="desc"></div></div>
+<div class="issue p2"><div class="title">P2-11 · 无 sitemap / 无 structured data</div><div class="desc"></div></div>
+<div class="issue p2"><div class="title">P2-12 · baidu_verify / google 两个验证文件放在根目录</div><div class="desc">无实际作用，可移除。</div></div>
+<div class="issue p2"><div class="title">P2-13 · 下载页无面包屑导航</div><div class="desc"></div></div>
+<div class="issue p2"><div class="title">P2-14 · 无暗色模式偏好记忆</div><div class="desc">每次刷新重置。</div></div>
+<div class="issue p2"><div class="title">P2-15 · 无性能监控 / 无错误上报</div><div class="desc"></div></div>
+</div>
+
+<!-- 部署架构 -->
+<div class="card">
+<h2>🏗️ 部署架构</h2>
+<div class="timeline">
+<div class="tl-item"><span class="date">用户请求</span> → Cloudflare（DNS + 反向代理 + DDoS 防护 + 缓存）</div>
+<div class="tl-item"><span class="date">回源</span> → GitHub Pages（Fastly CDN，边缘节点在东京/孟买间漂移）</divdiv>
+<div class="tl-item"><span class="date">CI 触发</span> → push main → <code>.github/workflows/deploy-pages.yml</code> → 实测 59 秒完成部署</div>
+<div class="tl-item"><span class="date">铁证</span> → <code>X-GitHub-Request-Id</code> + <code>x-github-edge-region</code> + <code>Via: 1.1 varnish</code> + <code>X-Served-By: cache-*</code> + <code>X-Fastly-Request-ID</code></div>
+</div>
+<p style="margin-top:12px;font-size:.85rem;color:var(--text-2)">Cloudflare 上无独立站点副本，纯转发层。GitHub Pages 自动采用根目录 <code>404.html</code> 作自定义 404 页。</p>
+</div>
+
+<!-- 修复路线图 -->
+<div class="card">
+<h2>🛠️ 修复路线图</h2>
+
+<h3>第 1 步：立即止血（P0）</h3>
+<div class="step"><span class="n">1</span><span>移除 <code>index.html:740-742</code> 的 <code>initAudio(); tryPlay();</code>，回滚到 <code>index.html.bak-20260829-1707</code></span></div>
+<div class="step"><span class="n">2</span><span>排查 <code>pay.paomfz.com</code> 403 原因（Cloudflare 规则误伤？源站宕机？）</span></div>
+<div class="step"><span class="n">3</span><span>排查 <code>mall.909net.cn</code> 不可达原因，必要时更换支付渠道</span></div>
+<div class="step"><span class="n">4</span><span>VN 下载死链：补传 <code>down/vn/</code> 文件，或移除该卡片</span></div>
+<div class="step"><span class="n">5</span><span>从 CI 中移除 <code>rm -f CNAME</code></span></div>
+
+<h3>第 2 步：高优修复（P1）</h3>
+<div class="step"><span class="n">6</span><span>10 个 <code>target="_blank"</code> 全部补 <code>rel="noopener noreferrer"</code></span></div>
+<div class="step"><span class="n">7</span><span>删除 69.0MB 死文件（<code>down/ph/7A638484.zip</code> + <code>down/speed/</code>×3）</span></div>
+<div class="step"><span class="n">8</span><span>Cloudflare 面板添加安全响应头（HSTS/CSP/XFO/XCTO/Referrer-Policy）</span></div>
+<div class="step"><span class="n">9</span><span>修复 404.html：加 DOCTYPE、viewport、lang、h1、aria-label</span></div>
+<div class="step"><span class="n">10</span><span>修复页脚 "since 2099"、补 index 页脚 "(Except China)"</span></div>
+<div class="step"><span class="n">11</span><span>给 <code>.dl-card</code> 加 role/tabindex/键盘事件</span></div>
+<div class="step"><span class="n">12</span><span><code>.gitignore</code> 补 <code>*.bak*</code>、<code>reports/</code>、<code>tmp/</code></span></div>
+<div class="step"><span class="n">13</span><span>git gc 清理仓库（先远端删除大文件历史，再 gc）</span></div>
+
+<h3>第 3 步：中长期优化（P2）</h3>
+<div class="step"><span class="n">14</span><span>CSS 提取到 <code>static/site.css</code>（需权衡单文件特性）</span></div>
+<div class="step"><span class="n">15</span><span>统一 404.html 为 v6 深色磨砂玻璃</span></div>
+<div class="step"><span class="n">16</span><span>清理 <code>static/images/</code> 零引用文件</span></div>
+<div class="step"><span class="n">17</span><span>提交信息规范化（用 conventional commits）</span></div>
+<div class="step"><span class="n">18</span><span>添加 sitemap.xml + structured data</span></div>
+<div class="step"><span class="n">19</span><span>考虑迁 Cloudflare Pages / R2 缩短回源延迟</span></div>
+
+</div>
+
+<!-- 成本风险 -->
+<div class="card">
+<h2>⚠️ 成本与风险评估</h2>
+<table>
+  <tr><th>风险项</th><th>等级</th><th>影响</th><th>缓解</th></tr>
+  <tr><td>主转化路径断裂</td><td><span class="badge badge-p0">P0</span></td><td>用户无法购买，收入归零</td><td>立即排查 pay.paomfz.com</td></tr>
+  <tr><td>音乐自动播放回归</td><td><span class="badge badge-p0">P0</span></td><td>用户体验极差，可能被投诉</td><td>回滚到 08-25 版本</td></tr>
+  <tr><td>CI 域名解绑</td><td><span class="badge badge-p0">P0</span></td><td>全站 404，业务完全中断</td><td>移除 <code>rm -f CNAME</code></td></tr>
+  <tr><td>仓库膨胀 1.5GB</td><td><span class="badge badge-p1">P1</span></td><td>clone/推送慢，存储成本</td><td>远端 BFG 清理 + gc</td></tr>
+  <tr><td>合规声明矛盾</td><td><span class="badge badge-p1">P1</span></td><td>监管风险</td><td>统一两页声明，移除境内支付渠道</td></tr>
+  <tr><td>边缘节点漂移</td><td><span class="badge badge-p2">P2</span></td><td>中文用户延迟上升</td><td>平台侧无法修，可考虑 CF Pages</td></tr>
+</table>
+</div>
+
+<p style="text-align:center;color:var(--text-3);font-size:.8rem;margin-top:32px">
+分析时间：2026-09-01 14:38 GMT+8 · 数据来源：线上实测 + 仓库审计 + git 历史分析
+</p>
+
+</div>
+</body>
+</html>

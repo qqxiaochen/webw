@@ -3,21 +3,29 @@
 ## 项目概述
 PaoMian Hax（泡面辅助）官网，提供 CrossFire（穿越火线）游戏第三方辅助工具下载。
 域名：www.paomfz.com，纯静态网站，无后端。
-### 部署架构（2026-08-29 实测定论，**推翻 08-27 的 Cloudflare Pages 结论**）
-**用户 → Cloudflare（DNS + 反向代理，172.66.40.151，CF-RAY: HKG）→ 回源 GitHub Pages（Fastly · japaneast）**
-- 铁证：`X-GitHub-Request-Id` + `x-github-edge-region: japaneast` + `Via: 1.1 varnish` + `X-Served-By: cache-nrt-*` + `X-Fastly-Request-ID`。这套组合只有 GitHub Pages 会有
+### 部署架构（2026-08-31 实测复核，架构结论不变）
+**用户 → Cloudflare（DNS + 反向代理）→ 回源 GitHub Pages（Fastly）**
+- 铁证：`X-GitHub-Request-Id` + `x-github-edge-region` + `Via: 1.1 varnish` + `X-Served-By: cache-*` + `X-Fastly-Request-ID`。这套组合只有 GitHub Pages 会有
 - Cloudflare 上**无独立站点副本**，纯转发层
 - CI：`.github/workflows/deploy-pages.yml`，push main 触发；**实测提交后 59 秒完成部署，链路健康**
-- 08-28 的 v4 改版从未 commit，故从未上线 —— 此前登记的「发布漂移 P0」**已于 2026-08-29 撤销**
-- ⚠ **P0 隐患**：CI 里有 `rm -f CNAME`，注释称"仅部署 github.io、保留 Cloudflare 主站"，但该前提不存在（主站就在 GH Pages）。每次部署都在删自定义域名凭证，随时可能解绑 → 全站 404
+- 08-28 的 v4 改版从未 commit，故从未上线 —— 「发布漂移 P0」**已于 2026-08-29 撤销**
+- ⚠ **P0 隐患未除**：CI 里有 `rm -f CNAME`，注释称"仅部署 github.io、保留 Cloudflare 主站"，但该前提不存在（主站就在 GH Pages）。每次部署都在删自定义域名凭证，随时可能解绑 → 全站 404
+- ⚠ **边缘节点漂移（2026-08-31）**：08-29 是 CF `HKG` + GH `japaneast` + Fastly `cache-nrt-*`（东京）；08-31 变成 CF `DEL` + GH `centralindia` + Fastly `cache-bom-*`（孟买）。东亚→南亚，中文用户延迟上升。属平台调度抖动，仓库侧无法修；若长期停留可考虑迁 Cloudflare Pages / R2 缩短回源
 
-### 待治理问题（完整版见 2026-08-29 分析报告 v3）
-- **P0** VN 下载死链：`download.html:431` → `/down/vn/PaoMianHax-Vn-211103-2(Pass123).zip` 线上 404，本地无 `down/vn/` 目录
-- **P0** 10 个 `target="_blank"` 缺 `rel="noopener noreferrer"`（index 6 + download 4）
-- **P1** 死文件 69.1MB（`down/ph/7A638484.zip` + `down/speed/`×3）+ `static/images/` 13 个零引用文件
-- **P1** `.git` 1.5GB / 433 个 loose object / **in-pack: 0**（从未 gc）；历史 20+ 个 31MB 级 ZIP blob
-- 404.html 缺 DOCTYPE、viewport 禁用缩放、`lang="en"` 但正文中文；download.html 缺 h1
-- 零安全响应头（HSTS/CSP/XFO/XCTO/Referrer-Policy 全无）；无 sitemap.xml / robots.txt
+### 待治理问题（完整版见 2026-08-31 分析报告 v4）
+- **P0-新（08-31）** 背景音乐自动播放**回归**：`index.html:740-742` 加载即 `initAudio(); tryPlay();`，且 `:714-720` 挂了 `document` 一次性 click 兜底 —— **点页面任意位置都会触发播放**；`preload='auto'` 使 3.1MB mp3 首屏即拉取。08-25 明确移除过，08-29 17:07 被加回且**已上线**。**回滚源**：`index.html.bak-20260829-1707`（"懶加載，默認關閉"版，已被 git 跟踪并推远端）
+- **P0-新（08-31）** `pay.paomfz.com` 返回 **403** —— index 上 2 个 Purchase 按钮（导航 + Hero）全指向它，主转化路径断裂。疑似 Cloudflare 规则误伤
+- **P0-新（08-31）** `mall.909net.cn` 不可达（curl 000）—— Hero「店鋪」按钮目标
+- **P0** VN 下载死链：`download.html:418` → `/down/vn/PaoMianHax-Vn-211103-2(Pass123).zip` 线上 404，本地无 `down/vn/` 目录。**整卡可点击（:605-611）放大了误触面积**；且卡片标 `Updating` 却仍给可点下载按钮，状态与交互矛盾
+- **P1** 10 个 `target="_blank"` 缺 `rel="noopener noreferrer"`（index 6 + download 4）
+- **P1** 死文件 69.0MB（`down/ph/7A638484.zip` + `down/speed/`×3）+ `static/images/` 13 个零引用文件
+  - `down/speed/` 三份 **MD5 完全相同 `12042ea173`**，同一文件复制三遍，纯浪费 25.4MB
+- **P1** `.git` 1.5GB / 463 loose object / **in-pack: 0**（从未 gc）；55 个 >1MB blob 合计 1433MB，46 个 >25MB；`down/` 历史 47 个版本（ph 31 + we 15 + speed 1）
+- **P1** CSS 重复 51%：download 16,614 字符中 6,171 字符与 index **选择器+声明完全相同**（64 同名 / 61 条一致）
+- **P1** 404.html 缺 DOCTYPE（三页唯一）、viewport 禁用缩放、`lang="en"` 但正文中文、用 h5 当主标题、0 处 aria-label、无 main/nav/footer；download.html 缺 h1
+- **P1** 零安全响应头（HSTS/CSP/XFO/XCTO/Referrer-Policy 全无）+ 非预期的 `Access-Control-Allow-Origin: *`。**可在 Cloudflare 面板加响应头规则解决，无需改代码**
+- **P1** `index.html.bak-20260829-1707` 被 git 跟踪并已推远端，且线上可直接访问
+- `robots.txt` 返回 200 但**是 Cloudflare 注入的 content-signals 模板**（1248B 全注释，零有效规则）；`sitemap.xml` 404
 - 仓库体积 1.6GB（历史二进制污染）
 
 ## 技术栈
@@ -50,16 +58,23 @@ PaoMian Hax（泡面辅助）官网，提供 CrossFire（穿越火线）游戏�
 - **还原/回退诉求：先摆时间线 + 备份快照列表让用户确认落点，再执行**。用户口中的「昨天的页面」指改动发生**之前**的状态，而非字面日期当天（2026-08-29 实测）。回退前必先快照当前版本。
 
 ## 代码质量问题记录
-**已修复（2026-08-25 重写）**：~~HTML 结构错乱~~、~~3 份 jQuery 并存~~、~~缺 meta description/OG/lang~~、~~autoplay music.mp3~~、~~无 .gitignore~~
+**已修复（2026-08-25 重写）**：~~HTML 结构错乱~~、~~3 份 jQuery 并存~~、~~缺 meta description/OG/lang~~、~~无 .gitignore~~
+**⚠ 已回归**：~~autoplay music.mp3~~ —— **2026-08-29 17:07 又被加回**（见上方 P0-新），08-31 仍在线
 
-**仍待处理（2026-08-29 复核）**：
-1. 404.html 缺 DOCTYPE、viewport 禁用缩放、lang 标注错误
+**仍待处理（2026-08-31 复核）**：
+1. 404.html 缺 DOCTYPE、viewport 禁用缩放、lang 标注错误、h5 当主标题、零 aria
 2. download.html 缺 h1；keywords 黑帽堆砌（index 20+ 重复变体，建议整行删除）
 3. 10 个 `target="_blank"` 缺 `rel="noopener noreferrer"`
-4. 三页 CSS 高度重复（index↔download 约 60% 复制），建议抽 `static/site.css`
-5. git 提交信息多为「1」，无法追溯变更意图
+4. CSS 重复 51%（index↔download），建议抽 `static/site.css`（但会破坏"单文件自包含"特性，需权衡）
+5. git 提交信息 76 次中 75 次是「1」，无法追溯变更意图（本次音乐回归就是靠比对备份文件才定位到的）
 6. 支付渠道 `mall.909net.cn`（境内域名）与页脚 "Except China" 声明矛盾（合规风险）；且 index 页脚**漏写** "(Except China)"，两页声明不一致
-7. `.workbuddy/` 26 个文件被 git 跟踪（含 reports/ 11MB 截图），`.gitignore` 漏了 `reports/` 与 `tmp/`
+7. `.workbuddy/` **32 个文件**被 git 跟踪（10 张截图 PNG + 6 tmp + 4 报告 + 6 memory 日志），`.gitignore` 漏了 `reports/` 与 `tmp/`
+8. 两页 Modal 无焦点陷阱（打开后 Tab 可跑到背景内容，关闭后焦点不回原位）
+9. `.dl-card` 整卡 click 但无 role/tabindex/键盘事件 —— 键盘与读屏用户完全不可达
+10. YouTube iframe 硬编码，大陆用户白屏无兜底
+11. 页脚 "since 2099" 占位文本未改（两页都有）
+12. Hero 四个按钮语义重叠（店鋪 / Purchase 都指向购买，且当前都不可用）
+13. `.gitignore` 未忽略 `*.bak*`，导致根目录备份文件被提交并发布到线上
 
 ## 改版记录
 - **2026-08-25** index.html 完全重写 — macOS Liquid Glass 风格（自包含 35KB 单文件 v3）
@@ -77,6 +92,7 @@ PaoMian Hax（泡面辅助）官网，提供 CrossFire（穿越火线）游戏�
   - 旧版备份：`.workbuddy/backups/index.html.bak-20260825`
 - 深度分析报告：`.workbuddy/reports/paomian-website-analysis.html`（2026-08-25，含 P0/P1/P2 优化路线图）
 - **2026-08-27** 深度分析 v2：`.workbuddy/reports/project-deep-analysis-20260827-v2.html`（含线上全站 URL 实测表、部署架构真相、仓库膨胀分析）
+- **2026-08-31** 深度分析 **v4**：`.workbuddy/reports/project-deep-analysis-20260831-v4.html`（5 P0 / 11 P1 / 13 P2；新发现音乐自动播放回归、pay 403、CDN 节点漂移到南亚；含 14 步修复路线图与成本风险评估）。扫描脚本留在 `.workbuddy/tmp/{scan,css,assets,f404}.py`，可复用
 - **2026-08-27** `404.html` 重构为 Apple Liquid Glass：复用现有 class（.wrap/.main/.header-tabs/.header-url/.main-content 及控件），新增 `:root` 设计令牌、`.wrap::before/::after` 双 ambient 光晕、`.main::before/::after` 受光高光+shine 扫过；保留 URL 回填与 5 秒跳转脚本。临时 CSS 副本 `.workbuddy/tmp/404-liquid-glass.css`
 - **2026-08-28 18:17** 三页改版 v4 Editorial Material System（去玻璃化），改前备份 `*.bak-20260828`
 - **2026-08-29 14:54 v4 已撤销，全站回退 v3**：从 `*.bak-20260828` 还原（已验证 ≡ git HEAD `a5ecca3`，仅行尾差异），回退前快照 `*.bak-20260829`。校验：`git status` 三页无差异；v3 特征复现（index 16× backdrop-filter / 3× 大圆角 / 10× radial-gradient；download 16×；404 10×）；HTML 闭合与 JS 元素 id 全部正常

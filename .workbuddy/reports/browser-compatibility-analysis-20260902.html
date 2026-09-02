@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaoMian Hax · 浏览器兼容性评估报告 · 2026-09-02</title>
+<style>
+:root{
+  --bg:#f7f8fb;--card:#fff;--ink:#1c2230;--ink2:#55607a;--ink3:#8a93a8;
+  --line:#e6e9f0;--accent:#3b6cff;--accent-soft:#eaf0ff;
+  --c1:#e23d4b;--c1bg:#fdecee;--c2:#e08a1e;--c2bg:#fdf2e2;--c3:#3b7d57;--c3bg:#ecf6ef;
+  --radius:14px;--shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;font-size:15px;padding:0 0 80px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+header{padding:50px 24px 38px;background:linear-gradient(135deg,#1b2340,#2a3a6e);color:#fff;margin-bottom:34px}
+header .wrap{padding:0 24px}
+header h1{font-size:25px;font-weight:700}
+header p{color:#c3ccf0;margin-top:8px;font-size:14px}
+h2{font-size:20px;font-weight:700;margin:38px 0 14px;padding-bottom:9px;border-bottom:2px solid var(--line);display:flex;align-items:center;gap:10px}
+h2 .n{font-size:13px;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
+h3{font-size:15.5px;font-weight:700;margin:20px 0 8px}
+p{margin:9px 0;color:var(--ink2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);margin:12px 0}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#f1f3f9;font-weight:700;font-size:12.5px}
+tr:last-child td{border-bottom:none}
+code{font-family:"SF Mono",Consolas,Menlo,monospace;background:var(--accent-soft);color:#23428f;padding:1px 6px;border-radius:5px;font-size:12px}
+.sev{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.sev.c1{background:var(--c1bg);color:var(--c1)}
+.sev.c2{background:var(--c2bg);color:var(--c2)}
+.sev.c3{background:var(--c3bg);color:var(--c3)}
+.note{font-size:13px;color:var(--ink3);background:#f6f8fc;border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+pre{background:#1b2233;color:#e6ecff;padding:14px 16px;border-radius:10px;overflow:auto;font-size:12.5px;line-height:1.55;margin:10px 0;white-space:pre}
+pre .c{color:#7f8db0}
+.tip{background:var(--c3bg);color:#235c3f;font-size:12.5px;padding:9px 13px;border-radius:8px;margin:8px 0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 0}
+.legend span{font-size:12px;color:var(--ink3)}
+.legend b{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>PaoMian Hax 官网 · 浏览器兼容性评估报告</h1>
+  <p>范围：index.html / download.html / 404.html · 现代主流浏览器 × 老旧浏览器 · 含渲染异常与降级方案</p>
+</div></header>
+
+<div class="wrap">
+
+<h2><span class="n">0</span>评估结论速览</h2>
+<div class="card">
+<p>站点整体采用<strong>现代 CSS + ES5 风格 JS</strong>，无构建、零依赖。在 <strong>Chrome 88+/Edge 88+/Firefox 103+/Safari 15+</strong> 等现代浏览器中表现完整；但在较旧浏览器（尤其 <strong>Chrome<87、Safari<14.1、Firefox<75、以及 IE 全系</strong>）会出现<strong>3 处功能性/可见性故障</strong>与若干视觉降级。</p>
+<div class="legend">
+  <span><b style="background:var(--c1)"></b>C1 严重：功能失效 / 内容不可见</span>
+  <span><b style="background:var(--c2)"></b>C2 中等：视觉降级（内容仍可读）</span>
+  <span><b style="background:var(--c3)"></b>C3 轻微：体验差异，无实质影响</span>
+</div>
+<div class="note">最危险的两点：① 滚动渐入（<code>.reveal</code>）默认 <code>opacity:0</code> 依赖 JS 添加 <code>.in</code>，而 JS 用 <code>NodeList.forEach</code> 且旧 IE 不支持 → <strong>IE 下整页内容不可见</strong>；② <code>inset</code> 简写用于背景光斑层，旧浏览器不支持 → <strong>环境渐变背景整层塌陷消失</strong>。</div>
+</div>
+
+<h2><span class="n">1</span>特性支持矩阵（按文件标注）</h2>
+<table>
+<tr><th>特性 / API</th><th>位置</th><th>Chrome</th><th>Firefox</th><th>Safari</th><th>Edge</th><th>IE</th><th>级</th></tr>
+<tr><td><code>backdrop-filter</code> 玻璃模糊</td><td>三页</td><td>76+</td><td>103+</td><td>9+(-wk)</td><td>79+</td><td>不支持</td><td><span class="sev c2">C2</span></td></tr>
+<tr><td><code>inset</code> 定位简写</td><td>index:94/113/137 · dl:107/132 · 404:78</td><td>87+</td><td>66+</td><td>14.1+</td><td>87+</td><td>不支持</td><td><span class="sev c1">C1</span></td></tr>
+<tr><td><code>aspect-ratio</code></td><td>index:277 (.video-frame)</td><td>88+</td><td>89+</td><td>15+</td><td>88+</td><td>不支持</td><td><span class="sev c1">C1</span></td></tr>
+<tr><td><code>clamp()</code> 流式字号</td><td>index:186/190 · dl:215/219</td><td>79+</td><td>75+</td><td>13.1+</td><td>79+</td><td>不支持</td><td><span class="sev c2">C2</span></td></tr>
+<tr><td><code>min()/max()</code></td><td>index:146/158/299 · dl:284</td><td>79+</td><td>75+</td><td>11.1+</td><td>79+</td><td>不支持</td><td><span class="sev c3">C3</span></td></tr>
+<tr><td>Flexbox <code>gap</code></td><td>index:162/192 · dl:220/251</td><td>84+</td><td>63+</td><td>14.1+</td><td>84+</td><td>不支持</td><td><span class="sev c2">C2</span></td></tr>
+<tr><td>CSS Grid 布局</td><td>index:256/276 · dl:220</td><td>57+</td><td>52+</td><td>10.1+</td><td>16+</td><td>不支持</td><td><span class="sev c2">C2</span></td></tr>
+<tr><td><code>background-clip:text</code> 渐变文字</td><td>index:187 · dl:217</td><td>有(-wk)</td><td>49+</td><td>有(-wk)</td><td>有</td><td>不支持</td><td><span class="sev c2">C2</span></td></tr>
+<tr><td><code>position:sticky</code></td><td>index:309 · dl:293</td><td>56+</td><td>52+</td><td>13+(-wk)</td><td>16+</td><td>不支持</td><td><span class="sev c3">C3</span></td></tr>
+<tr><td><code>mask-image</code> 光泽羽化</td><td>404:120</td><td>120+(-wk)</td><td>53+(-wk)</td><td>有(-wk)</td><td>有(-wk)</td><td>不支持</td><td><span class="sev c3">C3</span></td></tr>
+<tr><td><code>100svh</code> / <code>env(safe-area)</code></td><td>index:177/413 · dl:361</td><td>108+/11.4+</td><td>有</td><td>15.4+/11.4+</td><td>108+</td><td>不支持</td><td><span class="sev c3">C3</span></td></tr>
+<tr><td><code>scroll-behavior:smooth</code></td><td>index:82 · dl:78</td><td>61+</td><td>36+</td><td>15.4+</td><td>79+</td><td>不支持</td><td><span class="sev c3">C3</span></td></tr>
+<tr><td><code>prefers-reduced-motion</code></td><td>三页</td><td>74+</td><td>64+</td><td>10.1+</td><td>79+</td><td>不支持</td><td><span class="sev c3">C3</span></td></tr>
+<tr><td><code>IntersectionObserver</code></td><td>index:665 · dl:538</td><td>51+</td><td>55+</td><td>12.1+</td><td>15+</td><td>不支持</td><td><span class="sev c3">C3</span></td></tr>
+<tr><td><code>Element.closest()</code></td><td>index:656 · dl:529</td><td>61+</td><td>35+</td><td>9+</td><td>15+</td><td>不支持</td><td><span class="sev c2">C2</span></td></tr>
+<tr><td><code>NodeList.forEach</code></td><td>index:674/676 · dl:544/546/594/605</td><td>51+</td><td>35+</td><td>10+</td><td>15+</td><td>不支持</td><td><span class="sev c1">C1</span></td></tr>
+<tr><td><code>&lt;!DOCTYPE html&gt;</code></td><td>404.html（缺失）</td><td>—</td><td>—</td><td>—</td><td>—</td><td>触发怪异模式</td><td><span class="sev c1">C1</span></td></tr>
+</table>
+
+<h2><span class="n">2</span>严重问题（C1，必须处理）</h2>
+
+<div class="card">
+<h3>2.1 滚动渐入导致 IE/极旧浏览器整页不可见</h3>
+<p><strong>根因：</strong><code>.reveal{opacity:0;transform:translateY(28px)}</code>（index:361 / dl:321）默认隐藏，依赖 JS 添加 <code>.in</code>。但揭示逻辑用了 <code>revealEls.forEach(...)</code>；<strong>IE 既无 <code>IntersectionObserver</code> 也无 <code>NodeList.forEach</code></strong>，进入 <code>else</code> 分支（index:676 / dl:546）即抛 <code>TypeError</code>，<code>.in</code> 从未添加 → 所有 <code>.reveal</code> 区块永久 <code>opacity:0</code>。</p>
+<p><strong>影响版本：</strong>IE 11 及任何不支持 <code>NodeList.forEach</code> 的旧浏览器 → 首屏 Hero 以下内容全黑/全透明。</p>
+<p><strong>降级方案：</strong>① 不用 <code>NodeList.forEach</code>，改用 <code>Array.prototype.forEach.call</code> 或 <code>for</code> 循环；② 更稳妥——让 <code>.reveal</code> 默认<strong>可见</strong>，仅当 JS 就绪后再隐藏（加 <code>.js</code> 类门控）：</p>
+<pre><span class="c">/* CSS */</span>
+.reveal{opacity:1}                 <span class="c">/* 默认可见，无 JS 也能看 */</span>
+.js .reveal{opacity:0;transform:translateY(28px);transition:...}
+.js .reveal.in{opacity:1;transform:none}
+
+<span class="c">/* JS 顶部 */</span>
+document.documentElement.className += ' js';
+<span class="c">/* 遍历统一用兼容写法 */</span>
+var els = document.querySelectorAll('.reveal');
+Array.prototype.forEach.call(els, function(el){ io.observe(el); });</pre>
+<div class="tip">✓ 这样即使脚本在旧浏览器出错，内容仍可见（优雅降级），且现代浏览器动画不受影响。</div>
+</div>
+
+<div class="card">
+<h3>2.2 <code>inset</code> 简写使环境渐变背景层塌陷</h3>
+<p><strong>根因：</strong><code>body::before</code>（index:94 <code>inset:-12%</code>）、<code>.glass::before/::after</code>（index:113/137）、<code>.modal-backdrop</code>（index:297）等使用 <code>inset</code> 简写定位。<code>inset</code> 在 <strong>Chrome&lt;87、Safari&lt;14.1、Firefox&lt;66</strong> 不被识别 → 绝对/固定定位元素失去 <code>top/right/bottom/left</code> → 尺寸塌为 0。</p>
+<p><strong>表现：</strong>首屏彩色光斑背景（<code>body::before</code>）整层消失，仅剩纯色底；玻璃面板的高光/内反射伪元素错位；遮罩层失效。</p>
+<p><strong>降级方案：</strong>把 <code>inset</code> 展开为四向显式值（现代浏览器两种写法并存无副作用）：</p>
+<pre><span class="c">/* 改前 */</span> body::before{position:fixed;inset:-12%;...}
+<span class="c">/* 改后 */</span> body::before{position:fixed;top:-12%;right:-12%;bottom:-12%;left:-12%;...}
+<span class="c">/* .glass::after 改后 */</span> .glass::after{position:absolute;right:0;bottom:0;left:0;height:38%;...}</pre>
+</div>
+
+<div class="card">
+<h3>2.3 <code>aspect-ratio</code> 使 YouTube 嵌入在旧浏览器高度为 0</h3>
+<p><strong>根因：</strong><code>.video-frame{aspect-ratio:16/9}</code>（index:277）配合 <code>.video-frame iframe{height:100%}</code>。旧浏览器不识 <code>aspect-ratio</code> → 父容器无高度 → iframe <code>100%</code> 解析为 0 → <strong>视频区不可见</strong>。</p>
+<p><strong>影响版本：</strong>Chrome&lt;88 / Safari&lt;15 / Firefox&lt;89。</p>
+<p><strong>降级方案：</strong>经典 padding 比例 hack 作为回退（现代浏览器 <code>aspect-ratio</code> 会覆盖）：</p>
+<pre>.video-frame{position:relative;aspect-ratio:16/9;
+  padding-top:56.25%; <span class="c">/* 回退：16:9；aspect-ratio 支持时此值被忽略但无害 */</span>}
+.video-frame iframe{position:absolute;inset:0;width:100%;height:100%}
+<span class="c">/* 注意：同时给 iframe 显式 inset:0（见 2.2 展开写法） */</span></pre>
+</div>
+
+<div class="card">
+<h3>2.4 404.html 缺失 DOCTYPE → 怪异模式（Quirks Mode）</h3>
+<p><strong>根因：</strong>404.html 第 1–2 行为空行，<code>&lt;html&gt;</code> 前无 <code>&lt;!DOCTYPE html&gt;</code>（已实测 head -c 400 无 DOCTYPE）。这会导致<strong>所有浏览器进入怪异模式</strong>：盒模型按 IE5 解析、<code>box-sizing</code>/ 百分比高度 / 定位行为漂移，叠加其已写的 <code>-ms-transform</code> 兼容代码反而自相矛盾。</p>
+<p><strong>降级方案：</strong>在文件最顶部加 <code>&lt;!DOCTYPE html&gt;</code>，并修正 <code>lang</code> 与可缩放视口（当前 <code>user-scalable=0</code> 违反无障碍）：</p>
+<pre>&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-CN"&gt;
+&lt;meta name="viewport" content="width=device-width,initial-scale=1"&gt;</pre>
+</div>
+
+<h2><span class="n">3</span>中等降级（C2，内容可读，视觉减分）</h2>
+<table>
+<tr><th>特性</th><th>旧浏览器表现</th><th>降级 / 兼容处理</th></tr>
+<tr><td><code>backdrop-filter</code> 磨砂玻璃</td><td>无模糊；因 <code>.glass</code> 已设半透明白底（<code>--glass-bg:rgba(255,255,255,.055)</code>），面板仍可见，仅失去"毛玻璃"质感；文字对比在亮色光斑上略降</td><td>加 <code>@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){ .glass{background:rgba(20,24,40,.6)} }</code> 提升无模糊时的可读性</td></tr>
+<tr><td><code>clamp()</code> 字号</td><td>声明整体无效 → 回退到继承/默认字号，Hero 标题可能过小或过大</td><td>在 clamp 前写一行固定值回退：<code>font-size:3rem; font-size:clamp(3rem,9vw,5.4rem)</code></td></tr>
+<tr><td>Flexbox <code>gap</code></td><td>Chrome&lt;84 / Safari&lt;14.1 中 flex 子项无间距、紧挨</td><td>对关键 flex 容器用 <code>margin</code> 替代 gap，或接受（功能不受影响）</td></tr>
+<tr><td>CSS Grid</td><td>IE / 极旧浏览器退化为块级纵向堆叠（单栏），仍可读</td><td>如需多栏可加 <code>display:inline-block</code> 回退；否则接受单栏</td></tr>
+<tr><td><code>background-clip:text</code> 渐变标题</td><td>极旧 Firefox(&lt;49) 若仅认 <code>-webkit-text-fill-color:transparent</code> 而不认 clip → 文字变透明不可见</td><td>在透明填充前加实色 <code>color:var(--text-1)</code> 兜底：<code>color:#f2f3f7; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent</code></td></tr>
+<tr><td><code>Element.closest()</code></td><td>IE 中点击菜单链接时 handler 抛错（但不阻断导航）</td><td>加 10 行 closest polyfill，或改用 <code>e.target.tagName==='A' || e.target.parentNode...</code> 向上查找</td></tr>
+</table>
+
+<h2><span class="n">4</span>轻微差异（C3，可忽略）</h2>
+<ul>
+<li><strong><code>100svh</code> / <code>env(safe-area-inset-bottom)</code></strong>：index 已对 Hero 写 <code>min-height:100vh</code> 回退；旧浏览器仅缺失刘海屏安全区适配，无实质损害。</li>
+<li><strong><code>scroll-behavior:smooth</code> / <code>window.scrollTo({behavior:'smooth'})</code></strong>：旧浏览器退化为瞬间跳转；<code>scrollTo</code> 传对象在 IE 会被忽略 → 返回顶部失效。建议改 <code>window.scrollTo(0,0)</code> 或在对象外再调一次数值版。</li>
+<li><strong><code>prefers-reduced-motion</code></strong>：旧浏览器不识别 → 动画照常播放，仅影响"减少动态"偏好用户，可接受。</li>
+<li><strong><code>mask-image</code>（404 光泽）</strong>：不支持时光带呈矩形而非羽化，纯装饰，无影响。</li>
+<li><strong><code>position:sticky</code>（弹窗标题栏）</strong>：Safari&lt;13 不吸附，弹窗滚动时标题栏随内容滚走，功能正常。</li>
+<li><strong><code>mix-blend-mode:screen</code>（404）</strong>：IE 不支持 CSS 滤镜混合，光带直接叠绘，无影响。</li>
+</ul>
+
+<h2><span class="n">5</span>JS 兼容性总评与最低安全运行方案</h2>
+<div class="card">
+<p>脚本本身<strong>刻意使用 ES5 写法（var / IIFE / 无箭头函数 / 无模板字符串）</strong>，这点对旧浏览器友好。但有两处"现代 DOM API"是隐患：<code>NodeList.forEach</code>（C1）与 <code>Element.closest</code>（C2）。<code>IntersectionObserver</code> 已有降级分支（好），<code>audio.play()</code> Promise 已用 <code>if(p&amp;&amp;p.catch)</code> 防御（好）。</p>
+<div class="tip">✓ 推荐"最低安全目标"：保证 <strong>IE11 及以上能看全内容、核心按钮可用</strong>。只需落实 §2.1（reveal 默认可见 + 遍历兼容）、§2.2（inset 展开）、§2.3（video 比例 hack）、§2.4（404 DOCTYPE）四项，即可让 IE11 与 5 年前主流浏览器正常访问；其余 C2/C3 为视觉减分，可按优先级后续补。</div>
+</div>
+
+<h2><span class="n">6</span>一键兼容补丁清单（建议落地顺序）</h2>
+<table>
+<tr><th>#</th><th>动作</th><th>解决</th><th>代价</th></tr>
+<tr><td>1</td><td><code>.reveal</code> 默认可见 + <code>.js</code> 门控；遍历改用 <code>Array.prototype.forEach.call</code></td><td>§2.1 IE 内容不可见</td><td>低</td></tr>
+<tr><td>2</td><td>全站 <code>inset</code> → 四向 <code>top/right/bottom/left</code></td><td>§2.2 背景层塌陷</td><td>低</td></tr>
+<tr><td>3</td><td><code>.video-frame</code> 加 <code>padding-top:56.25%</code> + iframe <code>position:absolute;inset:0</code></td><td>§2.3 视频 0 高</td><td>低</td></tr>
+<tr><td>4</td><td>404.html 顶部加 <code>&lt;!DOCTYPE html&gt;</code>，修 <code>lang</code> 与 viewport</td><td>§2.4 怪异模式</td><td>极低</td></tr>
+<tr><td>5</td><td>关键 <code>clamp()</code> 前补固定值；渐变文字前补实色 <code>color</code></td><td>§3 字号/文字风险</td><td>极低</td></tr>
+<tr><td>6</td><td>加 <code>@supports not (backdrop-filter)</code> 实底回退</td><td>§3 玻璃可读性</td><td>低</td></tr>
+<tr><td>7</td><td><code>closest</code> polyfill 或向上查找；<code>scrollTo(0,0)</code> 数值版</td><td>§3/§4 IE 报错</td><td>低</td></tr>
+</table>
+
+<div class="footer" style="margin-top:46px;text-align:center;color:var(--ink3);font-size:12.5px">
+  PaoMian Hax 浏览器兼容性评估 · 2026-09-02 · 依据三页源码静态审计 + caniuse 版本基线
+</div>
+
+</div>
+</body>
+</html>

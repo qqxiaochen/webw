@@ -88,7 +88,7 @@ body{
 
 /* 環境光光斑层：深底上濃一檔，让磨砂玻璃透出柔和色暈 */
 body::before{
-  content:"";position:fixed;inset:-12%;z-index:-2;pointer-events:none;
+  content:"";position:fixed;top:-12%;right:-12%;bottom:-12%;left:-12%;z-index:-2;pointer-events:none;
   background:
     radial-gradient(46% 42% at 14% 16%, rgba(72,104,235,.42), transparent 66%),
     radial-gradient(40% 36% at 86% 10%, rgba(140,96,230,.36), transparent 66%),
@@ -105,7 +105,7 @@ body::before{
 }
 
 body::after{
-  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:var(--grain-opacity);
+  content:"";position:fixed;top:0;right:0;bottom:0;left:0;z-index:-1;pointer-events:none;opacity:var(--grain-opacity);
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -123,14 +123,14 @@ body::after{
 }
 /* 頂部受光：深底上玻璃本身比背景亮，斜向高光讀出受光面 */
 .glass::before{
-  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  content:"";position:absolute;top:0;right:0;bottom:0;left:0;border-radius:inherit;pointer-events:none;
   background:
     linear-gradient(115deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.05) 20%, transparent 42%),
     linear-gradient(to bottom, rgba(255,255,255,.10), transparent 58%);
 }
 /* 底部內反射：深底上玻璃厚度表現為「內亮邊」（白底是暗邊，正好相反） */
 .glass::after{
-  content:"";position:absolute;inset:auto 0 0 0;height:38%;
+  content:"";position:absolute;top:auto;right:0;bottom:0;left:0;height:38%;
   border-radius:inherit;pointer-events:none;
   background:linear-gradient(to top, rgba(255,255,255,.06), transparent 62%);
 }
@@ -275,10 +275,10 @@ body::after{
 .retTop svg{width:18px;height:18px}
 
 /* ---------- 8. macOS Modal ---------- */
-.modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;
+.modal{position:fixed;top:0;right:0;bottom:0;left:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;
   visibility:hidden;opacity:0;transition:visibility 0s .4s,opacity .35s}
 .modal.open{visibility:visible;opacity:1;transition:visibility 0s,opacity .35s}
-.modal-backdrop{position:absolute;inset:0;background:rgba(4,5,10,.5);
+.modal-backdrop{position:absolute;top:0;right:0;bottom:0;left:0;background:rgba(4,5,10,.5);
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .modal-window{
   position:relative;width:min(520px,100%);max-height:82svh;overflow:auto;
@@ -318,11 +318,12 @@ body::after{
 .footer-sub{margin-top:10px;font-size:12.5px;color:var(--text-3)}
 
 /* ---------- 10. Scroll Reveal ---------- */
-.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.25,1)}
-.reveal.in{opacity:1;transform:none}
-.reveal[data-d="1"]{transition-delay:.08s}
-.reveal[data-d="2"]{transition-delay:.16s}
-.reveal[data-d="3"]{transition-delay:.24s}
+.reveal{opacity:1}                 /* 默认可见：无 JS / 旧浏览器也能看全内容（兼容降级） */
+.js .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.25,1)}
+.js .reveal.in{opacity:1;transform:none}
+.js .reveal[data-d="1"]{transition-delay:.08s}
+.js .reveal[data-d="2"]{transition-delay:.16s}
+.js .reveal[data-d="3"]{transition-delay:.24s}
 
 /* ---------- 11. Responsive ---------- */
 @media (max-width:900px){
@@ -356,8 +357,8 @@ body::after{
   body::before{animation-duration:52s}
   .nav-brand small{transition:opacity .35s,max-height .35s}
   .nav.scrolled .nav-brand small{opacity:0;max-height:0}
-  .reveal{transform:translateY(36px) scale(.96)}
-  .reveal.in{transform:none}
+  .js .reveal{transform:translateY(36px) scale(.96)}
+  .js .reveal.in{transform:none}
   .footer{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
   .btn:active{transform:scale(.95)}
   .dl-card:active{transform:scale(.97)}
@@ -375,10 +376,11 @@ body::after{
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
   html{scroll-behavior:auto}
-  .reveal{opacity:1;transform:none}
+  .js .reveal{opacity:1;transform:none}
   body::before{animation:none}
 }
 </style>
+<script>document.documentElement.className+=' js'</script>
 </head>
 
 <body>
@@ -501,6 +503,7 @@ body::after{
    ============================================================ */
 (function(){
   'use strict';
+  document.documentElement.className += ' js';   /* 兼容门控：无 JS / 旧浏览器 reveal 仍可见 */
 
   /* ---------- 1. 導航滾動態 ---------- */
   var nav = document.getElementById('nav');
@@ -541,9 +544,9 @@ body::after{
         if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
       });
     }, {threshold:.12, rootMargin:'0px 0px -40px 0px'});
-    revealEls.forEach(function(el){ io.observe(el); });
+    Array.prototype.forEach.call(revealEls, function(el){ io.observe(el); });
   }else{
-    revealEls.forEach(function(el){ el.classList.add('in'); });
+    Array.prototype.forEach.call(revealEls, function(el){ el.classList.add('in'); });
   }
 
   /* ---------- 4. 返回頂部 ---------- */
@@ -591,7 +594,7 @@ body::after{
     document.body.style.overflow = 'hidden';
   }
   function closeModal(){ modal.classList.remove('open'); document.body.style.overflow = ''; }
-  document.querySelectorAll('[data-intro]').forEach(function(btn){
+  Array.prototype.forEach.call(document.querySelectorAll('[data-intro]'), function(btn){
     btn.addEventListener('click', function(){ openModal(btn.getAttribute('data-intro')); });
   });
   modal.addEventListener('click', function(e){
@@ -602,7 +605,7 @@ body::after{
   });
 
   /* ---------- 6. 卡片内容区点击触发下载（Intro 与密码区除外） ---------- */
-  document.querySelectorAll('.dl-card').forEach(function(card){
+  Array.prototype.forEach.call(document.querySelectorAll('.dl-card'), function(card){
     card.addEventListener('click', function(e){
       if(e.target.closest('.dl-actions') || e.target.closest('.dl-pass')) return;
       var link = card.querySelector('.btn-primary');

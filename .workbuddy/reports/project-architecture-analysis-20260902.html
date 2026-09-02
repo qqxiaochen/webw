@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaoMian Hax · 项目系统分析报告 · 2026-09-02</title>
+<style>
+:root{
+  --bg:#f7f8fb; --card:#ffffff; --ink:#1c2230; --ink2:#55607a; --ink3:#8a93a8;
+  --line:#e6e9f0; --accent:#3b6cff; --accent-soft:#eaf0ff;
+  --p0:#e23d4b; --p0bg:#fdecee; --p1:#e08a1e; --p1bg:#fdf2e2; --p2:#3b7d57; --p2bg:#ecf6ef;
+  --radius:14px; --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.7;font-size:15px;padding:0 0 80px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+header{padding:54px 24px 40px;background:linear-gradient(135deg,#1b2340,#2a3a6e);color:#fff;margin-bottom:36px}
+header .wrap{padding:0 24px}
+header h1{font-size:27px;font-weight:700;letter-spacing:-.01em}
+header p{color:#c3ccf0;margin-top:8px;font-size:14px}
+.tagrow{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap}
+.tag{font-size:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);padding:4px 11px;border-radius:999px;color:#e8ecff}
+h2{font-size:20px;font-weight:700;margin:40px 0 16px;padding-bottom:9px;border-bottom:2px solid var(--line);display:flex;align-items:center;gap:10px}
+h2 .n{font-size:13px;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
+h3{font-size:15.5px;font-weight:700;margin:22px 0 10px;color:var(--ink)}
+p{margin:10px 0;color:var(--ink2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow);margin:14px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
+.metric .v{font-size:26px;font-weight:800;color:var(--accent)}
+.metric .l{font-size:12.5px;color:var(--ink3);margin-top:2px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#f1f3f9;font-weight:700;color:var(--ink);font-size:12.5px}
+tr:last-child td{border-bottom:none}
+code{font-family:"SF Mono",Consolas,Menlo,monospace;background:var(--accent-soft);color:#23428f;padding:1px 6px;border-radius:5px;font-size:12.5px}
+.sev{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.sev.p0{background:var(--p0bg);color:var(--p0)}
+.sev.p1{background:var(--p1bg);color:var(--p1)}
+.sev.p2{background:var(--p2bg);color:var(--p2)}
+.sev.ok{background:#eef1f6;color:var(--ink3)}
+ul{margin:8px 0 8px 20px} li{margin:5px 0;color:var(--ink2)}
+.note{font-size:13px;color:var(--ink3);background:#f6f8fc;border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.arch{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);margin:14px 0}
+.flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+.box{flex:1;min-width:150px;border:1.5px solid var(--line);border-radius:10px;padding:14px;text-align:center;background:#fbfcfe}
+.box b{display:block;font-size:13.5px;color:var(--ink)}
+.box span{font-size:11.5px;color:var(--ink3)}
+.arrow{display:flex;align-items:center;justify-content:center;padding:0 10px;color:var(--ink3);font-size:18px}
+.bar{height:8px;border-radius:6px;background:var(--line);overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;border-radius:6px}
+.footer{margin-top:50px;text-align:center;color:var(--ink3);font-size:12.5px}
+.stamp{font-size:12px;color:var(--ink3);margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>PaoMian Hax（泡面辅助）官网 · 项目系统分析报告</h1>
+    <p>纯静态站点 · 架构 / 模块 / 技术栈 / 业务逻辑 / 代码质量 / 技术债务与改进建议</p>
+    <div class="tagrow">
+      <span class="tag">分析日期 2026-09-02</span>
+      <span class="tag">域名 www.paomfz.com</span>
+      <span class="tag">部署 GitHub Pages + Cloudflare</span>
+      <span class="tag">技术栈：原生 HTML/CSS/JS</span>
+      <span class="tag">实测级别：代码审计 + 线上探针</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- ============ 执行摘要 ============ -->
+<h2><span class="n">0</span>执行摘要</h2>
+<div class="grid3">
+  <div class="metric"><div class="v">3</div><div class="l">页面（index / download / 404，均自包含单文件）</div></div>
+  <div class="metric"><div class="v">~85KB</div><div class="l">HTML 总量（index 35.4KB + download 29.0KB + 404 19.1KB）</div></div>
+  <div class="metric"><div class="v">130MB</div><div class="l">down/ 下载产物（6 个 ZIP，仅 2 个在用）</div></div>
+  <div class="metric"><div class="v">1.5GB</div><div class="l">.git 仓库体积（历史二进制污染，in-pack: 0）</div></div>
+  <div class="metric"><div class="v">53%</div><div class="l">CSS 重复率（index↔download 选择器+声明完全相同）</div></div>
+  <div class="metric"><div class="v">4 P0</div><div class="l">致命风险（含 3 条线上已验证：pay403 / mall 失联 / VN404）</div></div>
+</div>
+<div class="note">
+<strong>总体结论：</strong>这是一个<strong>结构清晰、视觉完成度高</strong>的小型纯静态官网，业务逻辑集中在两个内联脚本中、可读性好；但存在<strong>严重的重复代码（CSS 53%）、仓库膨胀（1.5GB 历史）、多处线上死链与失效转化路径</strong>，以及<strong>每次部署会删除 CNAME 的 CI 隐患</strong>。当前最紧急的是恢复主转化路径（购买 / 店铺 / VN 下载）并消除部署解绑风险。
+</div>
+
+<!-- ============ 1 架构概览 ============ -->
+<h2><span class="n">1</span>架构概览</h2>
+<div class="card">
+<p>站点采用<strong>无后端、无构建、纯静态自包含单文件</strong>架构。三页各自内联全部 HTML+CSS+JS，无外部 CDN 依赖、无框架。部署链路为「开发者 push main → GitHub Actions CI → GitHub Pages → Cloudflare 反向代理回源 → 用户」。</p>
+
+<div class="arch">
+<div class="flow">
+  <div class="box"><b>开发者</b><span>push main</span></div>
+  <div class="arrow">→</div>
+  <div class="box"><b>GitHub Actions</b><span>deploy-pages.yml</span></div>
+  <div class="arrow">→</div>
+  <div class="box"><b>GitHub Pages</b><span>Fastly 回源</span></div>
+  <div class="arrow">→</div>
+  <div class="box"><b>Cloudflare</b><span>DNS + 反代</span></div>
+  <div class="arrow">→</div>
+  <div class="box"><b>终端用户</b><span>www.paomfz.com</span></div>
+</div>
+</div>
+
+<div class="grid2" style="margin-top:14px">
+<div>
+<h3>关键架构事实（实测）</h3>
+<ul>
+<li><strong>Cloudflare 仅为转发层</strong>，无独立站点副本；线上响应头含 <code>X-GitHub-Request-Id</code> + <code>Via: varnish</code> + <code>X-Fastly-Request-ID</code>，证实回源 GitHub Pages。</li>
+<li><strong>CI 每次执行 <code>rm -f CNAME</code></strong>（.github/workflows/deploy-pages.yml:31），注释称"仅部署 github.io、保留 Cloudflare 主站"——但该前提不成立，主站就在 GH Pages 上，<strong>每次部署都会删除自定义域名凭证，随时可能解绑导致全站 404</strong>。</li>
+<li>无服务端逻辑、无数据库、无 API；下载为静态文件直链，支付/社群跳转至第三方外链。</li>
+</ul>
+</div>
+<div>
+<h3>数据流</h3>
+<ul>
+<li><strong>内容数据</strong>：硬编码在 HTML（功能卡、下载卡、TOS 文案），无数据源。</li>
+<li><strong>下载产物</strong>：<code>down/{ph,we,speed}/*.zip</code> 静态直链。</li>
+<li><strong>转化出口</strong>：<code>pay.paomfz.com</code>（支付）、<code>mall.909net.cn</code>（店铺）、Discord / Telegram（社群）。</li>
+<li><strong>媒体</strong>：<code>static/music.mp3</code>（3.1MB，加载即尝试自动播放）、YouTube 嵌入 iframe。</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============ 2 目录结构与模块划分 ============ -->
+<h2><span class="n">2</span>目录结构与模块划分</h2>
+<table>
+<tr><th>路径</th><th>大小</th><th>职责</th><th>状态</th></tr>
+<tr><td><code>index.html</code></td><td>35.4KB</td><td>首页：Hero / 功能 / 社群 / TOS 弹窗 / 音乐开关</td><td><span class="sev ok">在用</span></td></tr>
+<tr><td><code>download.html</code></td><td>29.0KB</td><td>下载中心：VN/WE/PH 三服下载卡 + Intro 弹窗</td><td><span class="sev ok">在用</span></td></tr>
+<tr><td><code>404.html</code></td><td>19.1KB</td><td>自定义 404（仿浏览器窗口 + 5s 跳转）</td><td><span class="sev p1">缺 DOCTYPE/lang 错</span></td></tr>
+<tr><td><code>down/</code></td><td>130MB</td><td>6 个 ZIP（ph×2 / we×1 / speed×3）；<b>仅 we/5C72CA.zip 与 ph/9D759C3.zip 在用</b></td><td><span class="sev p1">4 个死文件 69MB</span></td></tr>
+<tr><td><code>static/</code></td><td>~3.3MB</td><td>music.mp3(3.1MB) + favicon.ico 被引用；<b>images/ 13 文件≈785KB 全部零引用</b></td><td><span class="sev p1">死资源</span></td></tr>
+<tr><td><code>.github/workflows/deploy-pages.yml</code></td><td>1KB</td><td>CI：push main 触发 Pages 部署</td><td><span class="sev p0">含 rm -f CNAME</span></td></tr>
+<tr><td><code>CNAME</code></td><td>14B</td><td>自定义域名 www.paomfz.com</td><td><span class="sev p0">被 CI 删除</span></td></tr>
+<tr><td><code>baidu_verify_*.html</code> / <code>google*.html</code></td><td>—</td><td>搜索引擎所有权校验文件</td><td><span class="sev ok">合规</span></td></tr>
+<tr><td><code>.workbuddy/</code></td><td>—</td><td>AI 工作区（报告/备份/记忆/脚本）</td><td><span class="sev p1">39 文件被 git 跟踪</span></td></tr>
+</table>
+<div class="note"><strong>模块划分特征：</strong>页面级划分清晰（首页 / 下载 / 404），但<strong>无跨页共享层</strong>——设计令牌（<code>:root</code>）、玻璃材质（<code>.glass</code>）、按钮、响应式断点全部在每个文件内<strong>复制</strong>。本质是"三份同源但彼此独立的副本"，而非"一处定义、多处引用"。</div>
+
+<!-- ============ 3 技术栈及合理性 ============ -->
+<h2><span class="n">3</span>技术栈及其合理性</h2>
+<table>
+<tr><th>维度</th><th>选型</th><th>合理性</th><th>评价</th></tr>
+<tr><td>HTML</td><td>原生语义标签 + 内联 SVG 图标</td><td>无外部图标库，零网络依赖；SVG 线性图标可维护</td><td><span class="sev ok">合理</span></td></tr>
+<tr><td>CSS</td><td>原生 CSS + CSS 变量设计令牌 + <code>backdrop-filter</code> 玻璃拟态</td><td>无构建、无预处理器；变量化 tokens 利于主题统一</td><td><span class="sev ok">合理</span></td></tr>
+<tr><td>JS</td><td>原生 ES5 风格 IIFE，无框架</td><td>交互轻量（菜单/弹窗/渐入/音乐），无框架必要</td><td><span class="sev ok">合理</span></td></tr>
+<tr><td>部署</td><td>GitHub Pages + Cloudflare</td><td>免费、免运维；但 CI 删 CNAME 是自制风险</td><td><span class="sev p1">有隐患</span></td></tr>
+<tr><td>依赖</td><td>零第三方依赖</td><td>无供应链风险、加载快</td><td><span class="sev ok">优秀</span></td></tr>
+<tr><td>资产管线</td><td>手工维护二进制</td><td>无压缩/指纹/版本化；死文件与重复文件堆积</td><td><span class="sev p1">不足</span></td></tr>
+</table>
+<div class="note"><strong>选型结论：</strong>技术栈与"轻量营销站"的定位高度匹配，<strong>零依赖是显著优点</strong>。主要问题不在"用什么"，而在"<strong>如何组织与维护</strong>"——重复内联导致任何视觉改动要改三处，且二进制资产缺乏治理。</div>
+
+<!-- ============ 4 核心业务逻辑实现位置 ============ -->
+<h2><span class="n">4</span>核心业务逻辑实现位置</h2>
+<table>
+<tr><th>功能</th><th>实现位置</th><th>说明</th></tr>
+<tr><td>浮动玻璃导航 + 滚动收缩 pill</td><td><code>index.html:613-625, 144-158</code></td><td>scroll 监听 + rAF 节流，<code>.scrolled</code> 切换</td></tr>
+<tr><td>Hero 滚动视差淡出</td><td><code>index.html:628-645</code></td><td>随 scrollY 计算 opacity/transform</td></tr>
+<tr><td>移动端汉堡菜单</td><td><code>index.html:648-661</code> / <code>download.html:521-534</code></td><td>两页各自实现，逻辑相同</td></tr>
+<tr><td>滚动渐入（reveal）</td><td><code>index.html:663-677</code> / <code>download.html:537-547</code></td><td>IntersectionObserver，无则降级全显</td></tr>
+<tr><td>macOS 风 TOS 弹窗</td><td><code>index.html:679-690, 575-598</code></td><td>模态开关 + Esc/backdrop 关闭</td></tr>
+<tr><td>Intr o 三服弹窗（数据驱动）</td><td><code>download.html:559-602</code></td><td><code>introData</code> 字典 + <code>data-intro</code> 分发，结构清晰</td></tr>
+<tr><td><b>背景音乐自动播放</b></td><td><code>index.html:692-742</code></td><td><strong>加载即 initAudio()+tryPlay()，并挂 document 一次性 click 兜底 → 点页面任意处即播放</strong>（回归缺陷）</td></tr>
+<tr><td><b>下载卡整卡点击触发下载</b></td><td><code>download.html:604-611</code></td><td>点击卡片非动作区即 <code>.btn-primary.click()</code></td></tr>
+<tr><td>下载数据与状态</td><td><code>download.html:409-460</code>（硬编码）</td><td>VN=Updating、WE/PH=Online；<strong>VN 链接指向不存在的 down/vn/</strong></td></tr>
+<tr><td>返回顶部</td><td><code>download.html:549-556</code></td><td>scrollY>420 显隐</td></tr>
+</table>
+
+<!-- ============ 5 代码质量与可维护性 ============ -->
+<h2><span class="n">5</span>代码质量与可维护性评估</h2>
+<div class="grid2">
+<div class="metric"><div class="bar"><i style="width:82%;background:#3b7d57"></i></div><div class="v" style="font-size:16px">可读性 8/10</div><div class="l">分区注释清晰（TOKENS/NAV/BUTTONS…），变量命名规范，IIFE 隔离作用域</div></div>
+<div class="metric"><div class="bar"><i style="width:38%;background:#e08a1e"></i></div><div class="v" style="font-size:16px">复用性 4/10</div><div class="l">CSS 53% 重复、JS 交互逻辑三页各写一遍，无共享模块</div></div>
+<div class="metric"><div class="bar"><i style="width:45%;background:#e08a1e"></i></div><div class="v" style="font-size:16px">可维护性 4.5/10</div><div class="l">视觉改版需同步 3 文件；无构建校验，易遗漏</div></div>
+<div class="metric"><div class="bar"><i style="width:70%;background:#3b6cff"></i></div><div class="v" style="font-size:16px">健壮性 7/10</div><div class="l">有 rAF 节流、IntersectionObserver 降级、prefers-reduced-motion；但弹窗无焦点陷阱</div></div>
+</div>
+<div class="card">
+<h3>亮点</h3>
+<ul>
+<li>完整的 <strong>设计令牌化</strong> <code>:root</code> 体系，深色玻璃视觉统一、完成度高。</li>
+<li>交互脚本<strong>防御性较好</strong>：rAF 节流、无 IO 降级、<code>prefers-reduced-motion</code> 全量关闭动画、<code>hover:none</code> 清理触屏粘滞。</li>
+<li>SEO/元信息齐全：canonical、OG、Twitter Card、theme-color、lang、description 完备。</li>
+<li>零第三方依赖，无供应链与版本漂移风险。</li>
+</ul>
+<h3>短板</h3>
+<ul>
+<li><strong>CSS 重复 53%</strong>（217/410 行与 download 完全相同），违背 DRY。</li>
+<li><strong>无 <code>h1</code></strong> 于 download.html（用 <code>.dl-head-en</code> 充当），404.html 以 <code>h5</code> 当主标题、缺 DOCTYPE、<code>lang="en"</code> 但正文中文、0 处 aria-label。</li>
+<li>10 个 <code>target="_blank"</code> 缺 <code>rel="noopener noreferrer"</code>（反钓鱼隐患）。</li>
+<li>下载卡整卡可点击但无 <code>role/tabindex/键盘事件</code>，键盘与读屏用户不可达；模态无焦点陷阱。</li>
+<li>音乐自动播放回归（见 P0）。</li>
+</ul>
+</div>
+
+<!-- ============ 6 技术债务与风险 ============ -->
+<h2><span class="n">6</span>技术债务与潜在风险（按严重度）</h2>
+<table>
+<tr><th>级别</th><th>问题</th><th>证据</th><th>影响</th></tr>
+<tr><td><span class="sev p0">P0</span></td><td>CI 每次部署 <code>rm -f CNAME</code></td><td>deploy-pages.yml:31</td><td>自定义域名凭证被删，随时全站 404</td></tr>
+<tr><td><span class="sev p0">P0</span></td><td><code>pay.paomfz.com</code> 返回 403</td><td>实测 HTTP 403（首页 2 个 Purchase 按钮出口）</td><td>主支付转化路径断裂</td></tr>
+<tr><td><span class="sev p0">P0</span></td><td><code>mall.909net.cn</code> 不可达</td><td>实测 curl 000（Hero「店鋪」按钮出口）</td><td>备用购买入口失效</td></tr>
+<tr><td><span class="sev p0">P0</span></td><td>VN 下载死链</td><td>download.html:418 → <code>/down/vn/...</code> 实测 404，本地无该目录</td><td>卡片标 Updating 却给可点下载，状态与交互矛盾；整卡可点放大误触</td></tr>
+<tr><td><span class="sev p0">P0</span></td><td>背景音乐自动播放回归</td><td>index.html:740-742 加载即播放 + :714-720 document click 兜底</td><td><code>preload='auto'</code> 首屏拉 3.1MB mp3；点页面任意处即响，体验侵扰</td></tr>
+<tr><td><span class="sev p1">P1</span></td><td>仓库膨胀 1.5GB / in-pack: 0</td><td>git 实测；55 个 >1MB blob 合计 1433MB；down/ 历史 47 版本</td><td>克隆/CI 慢，风险累积</td></tr>
+<tr><td><span class="sev p1">P1</span></td><td>死资源 69MB+785KB</td><td>down/ 4 个死 ZIP（speed×3 字节相同）；static/images 13 文件零引用</td><td>带宽/存储浪费，维护噪音</td></tr>
+<tr><td><span class="sev p1">P1</span></td><td>CSS 重复 53%</td><td>217 行完全相同</td><td>改动需同步三处，易漂移</td></tr>
+<tr><td><span class="sev p1">P1</span></td><td>零安全响应头</td><td>无 HSTS/CSP/XFO/XCTO/Referrer-Policy</td><td>可在 Cloudflare 面板加规则解决，无需改码</td></tr>
+<tr><td><span class="sev p1">P1</span></td><td><code>.workbuddy/</code> 39 文件被 git 跟踪</td><td>git ls-files 实测</td><td>AI 工作区泄漏至公开仓库</td></tr>
+<tr><td><span class="sev p2">P2</span></td><td>提交信息 75/76 为「1」</td><td>git log 实测</td><td>无法追溯变更意图</td></tr>
+<tr><td><span class="sev p2">P2</span></td><td>页脚 "since 2099" 占位未改</td><td>index 570 / download 476</td><td>不专业</td></tr>
+<tr><td><span class="sev p2">P2</span></td><td>两页合规声明不一致</td><td>index 漏 "(Except China)"</td><td>声明矛盾风险</td></tr>
+</table>
+
+<!-- ============ 7 改进建议 ============ -->
+<h2><span class="n">7</span>改进建议（优先级路线图）</h2>
+
+<div class="card">
+<h3>阶段一 · 止血（P0，预计 1 天）</h3>
+<ul>
+<li><strong>修 CI</strong>：删除 deploy-pages.yml 中 <code>rm -f CNAME</code>，或改为保留自定义域名部署；部署后验证 www.paomfz.com 仍可解析。</li>
+<li><strong>恢复转化路径</strong>：修复/替换 pay.paomfz.com（403）与 mall.909net.cn（失联），或将 Purchase/店鋪按钮指向可用入口；上线前用 curl 验证返回 200。</li>
+<li><strong>修 VN 死链</strong>：上传真实 VN 包到 <code>down/vn/</code>，或在未就绪时禁用下载按钮（仅保留 Intro）。</li>
+<li><strong>音乐自动播放</strong>：移除 index.html:740-742 的加载即播放与 document click 兜底，改为纯手动开关（保留右下角按钮即可）。</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>阶段二 · 减负（P1，预计 2-3 天）</h3>
+<ul>
+<li><strong>抽共享样式</strong>：将 <code>:root</code> + <code>.glass</code> + <code>.btn</code> + 响应式断点抽到 <code>static/site.css</code>，三页 <code>@import</code>/<code>&lt;link&gt;</code> 引用（权衡：会破坏"单文件自包含"，但换取可维护性；若不接收，则接受重复并加注释约定）。</li>
+<li><strong>清理死资源</strong>：删除 down/speed×3（字节相同）、down/ph/7A638484.zip、static/images 13 个零引用文件；释放 ~70MB。</li>
+<li><strong>Git 治理</strong>：<code>git gc --aggressive</code> 或历史重写（如 <code>git filter-repo</code>）消除 1.5GB；将 <code>.workbuddy/</code> 加入 .gitignore（当前仅忽略 backups/memory/*.bak*，漏了 reports/tmp）。</li>
+<li><strong>补安全响应头</strong>：Cloudflare → Rules → Transform/Response Headers 加 HSTS/CSP/XFO/Referrer-Policy。</li>
+<li><strong>可访问性</strong>：补 download.html 的 h1、404.html 的 DOCTYPE/lang/main/aria；10 个外链加 <code>rel="noopener noreferrer"</code>；下载卡加 <code>role="button" tabindex="0"</code> + 键盘事件；弹窗加焦点陷阱与关闭后焦点复位。</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>阶段三 · 提质（P2，按需）</h3>
+<ul>
+<li>规范提交信息（ Conventional Commits），便于追溯。</li>
+<li>统一两页合规声明与页脚年份；删除 "since 2099" 占位。</li>
+<li>将 YouTube iframe 加大陆访问兜底（失败时不留白屏）。</li>
+<li>对下载产物引入版本化/校验和，避免"版本号写在 HTML"的硬编码漂移。</li>
+</ul>
+</div>
+
+<!-- ============ 附录 ============ -->
+<h2><span class="n">8</span>附录 · 实测数据来源</h2>
+<table>
+<tr><th>检查项</th><th>方法</th><th>结果</th></tr>
+<tr><td>pay.paomfz.com</td><td>curl -I（10s）</td><td>HTTP 403（已验证）</td></tr>
+<tr><td>mall.909net.cn</td><td>curl -I（10s）</td><td>HTTP 000 不可达（已验证）</td></tr>
+<tr><td>VN 下载包</td><td>curl + 本地目录</td><td>HTTP 404，本地无 down/vn/（已验证）</td></tr>
+<tr><td>CSS 重复率</td><td>提取 &lt;style&gt; 比对去重行</td><td>217/410 完全相同（53%）</td></tr>
+<tr><td>.git 体积</td><td>du -sh .git</td><td>1.5GB，in-pack: 0</td></tr>
+<tr><td>.workbuddy 被跟踪</td><td>git ls-files | grep</td><td>39 个文件</td></tr>
+<tr><td>404.html 结构</td><td>grep/head</td><td>无 DOCTYPE、lang=en、0 aria、0 main、0 h1</td></tr>
+</table>
+
+<div class="footer">
+  PaoMian Hax 项目系统分析报告 · 生成于 2026-09-02 · 方法：静态代码审计 + 线上探针实测
+  <div class="stamp">本报告结论基于当前工作区代码与 2026-09-02 线上探测，建议结合阶段一措施优先止血。</div>
+</div>
+
+</div>
+</body>
+</html>

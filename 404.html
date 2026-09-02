@@ -1,6 +1,7 @@
 ﻿
 
-<html lang="en"><head><meta charset="UTF-8"><title>Page Not Found · 泡面 404</title> <link rel="shortcut icon" href="/favicon.ico"><meta http-equiv="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><meta name="renderer" content="webkit"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=0"><meta name="apple-mobile-web-app-capable" content="yes"><style type="text/css">
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>Page Not Found · 泡面 404</title> <link rel="shortcut icon" href="/favicon.ico"><meta http-equiv="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><meta name="renderer" content="webkit"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="apple-mobile-web-app-capable" content="yes"><style type="text/css">
 /* =========================================================
    PaoMian 404 — Apple Liquid Glass (visionOS-style) · v2 优化
    设计令牌 (Design Tokens)
@@ -75,7 +76,7 @@ body{
 
 /* 背景 SVG：保留为环境反射源，软化成液态光 */
 .wrap-bg{
-  position:absolute;inset:0;z-index:0;
+  position:absolute;top:0;right:0;bottom:0;left:0;z-index:0;
   filter:blur(26px) saturate(150%);
   opacity:.85;
 }
@@ -156,33 +157,46 @@ body{
 }
 .header-tabs .tab span{float:left}
 .header-tabs .tab i{
-  position:relative;float:right;width:11px;height:11px;margin:13px 0 0 14px;
-  cursor:pointer;transform:rotate(45deg);
+  position:relative;display:flex;align-items:center;justify-content:center;
+  width:18px;height:18px;margin-left:10px;flex:none;
+  cursor:pointer;transform:rotate(45deg);border-radius:5px;
+  transition:background .2s,transform .15s;
 }
-.header-tabs .tab i:before{content:'';position:absolute;top:5px;left:0;width:100%;height:1.5px;background:var(--ink-soft);border-radius:2px}
-.header-tabs .tab i:after{content:'';position:absolute;left:5px;top:0;width:1.5px;height:100%;background:var(--ink-soft);border-radius:2px}
+.header-tabs .tab i:hover{background:rgba(0,0,0,.08)}
+.header-tabs .tab i:active{transform:rotate(45deg) scale(.92)}
+.header-tabs .tab i:before{content:'';position:absolute;top:calc(50% - .75px);left:calc(50% - 5.5px);width:11px;height:1.5px;background:var(--ink-soft);border-radius:2px}
+.header-tabs .tab i:after{content:'';position:absolute;left:calc(50% - .75px);top:calc(50% - 5.5px);width:1.5px;height:11px;background:var(--ink-soft);border-radius:2px}
 .header-tabs .tab:hover{background:rgba(255,255,255,.48);transform:translateY(-1px)}
 
 .header-tabs .tab-add{
-  position:relative;width:26px;height:26px;margin-left:6px;flex:none;
+  position:relative;display:flex;align-items:center;justify-content:center;
+  width:30px;height:30px;margin-left:6px;flex:none;
   border-radius:50%;
   background:rgba(255,255,255,.30);
   border:1px solid rgba(255,255,255,.4);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
   transition:background .3s var(--spring), transform .3s var(--spring);
 }
-.header-tabs .tab-add:before{content:'';position:absolute;top:12px;left:8px;width:10px;height:2px;background:var(--ink);border-radius:2px}
-.header-tabs .tab-add:after{content:'';position:absolute;left:12px;top:8px;width:2px;height:10px;background:var(--ink);border-radius:2px}
+.header-tabs .tab-add:before{content:'';position:absolute;top:calc(50% - 1px);left:calc(50% - 5px);width:10px;height:2px;background:var(--ink);border-radius:2px}
+.header-tabs .tab-add:after{content:'';position:absolute;left:calc(50% - 1px);top:calc(50% - 5px);width:2px;height:10px;background:var(--ink);border-radius:2px}
 .header-tabs .tab-add:hover{background:rgba(255,255,255,.48);transform:rotate(90deg)}
+.header-tabs .tab-add:active{transform:rotate(90deg) scale(.92)}
 
-.header-tabs .tabs-tool{margin-left:auto;display:flex;align-items:center;height:100%}
-.header-tabs .tabs-tool a{position:relative;width:14px;height:14px;margin:0 12px;cursor:pointer}
-.header-tabs .tabs-tool .btn-min:before{content:'';position:absolute;top:6px;left:0;width:100%;height:1.5px;background:var(--ink);border-radius:2px}
-.header-tabs .tabs-tool .btn-max:before{content:'';position:absolute;top:0;left:0;width:14px;height:14px;border:1.5px solid var(--ink);border-radius:3px;box-sizing:border-box}
+.header-tabs .tabs-tool{margin-left:auto;display:flex;align-items:center;height:100%;gap:4px}
+.header-tabs .tabs-tool a{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:8px;cursor:pointer;
+  transition:background .2s,transform .15s;
+}
+.header-tabs .tabs-tool a:hover{background:rgba(0,0,0,.08)}
+.header-tabs .tabs-tool a:active{transform:scale(.93)}
+.header-tabs .tabs-tool .btn-close:hover{background:rgba(224,80,80,.12)}
+.header-tabs .tabs-tool .btn-close:active{transform:rotate(45deg) scale(.93)}
+.header-tabs .tabs-tool .btn-min:before{content:'';position:absolute;top:calc(50% - .75px);left:calc(50% - 7px);width:14px;height:1.5px;background:var(--ink);border-radius:2px}
+.header-tabs .tabs-tool .btn-max:before{content:'';position:absolute;top:calc(50% - 7px);left:calc(50% - 7px);width:14px;height:14px;border:1.5px solid var(--ink);border-radius:3px;box-sizing:border-box}
 .header-tabs .tabs-tool .btn-close{transform:rotate(45deg)}
-.header-tabs .tabs-tool .btn-close:before{content:'';position:absolute;top:6px;left:0;width:14px;height:1.5px;background:var(--accent-pink);border-radius:2px}
-.header-tabs .tabs-tool .btn-close:after{content:'';position:absolute;left:6px;top:0;width:1.5px;height:14px;background:var(--accent-pink);border-radius:2px}
-.header-tabs .tabs-tool a:hover{opacity:.7}
+.header-tabs .tabs-tool .btn-close:before{content:'';position:absolute;top:calc(50% - .75px);left:calc(50% - 7px);width:14px;height:1.5px;background:var(--accent-pink);border-radius:2px}
+.header-tabs .tabs-tool .btn-close:after{content:'';position:absolute;left:calc(50% - .75px);top:calc(50% - 7px);width:1.5px;height:14px;background:var(--accent-pink);border-radius:2px}
 
 /* ===================== 地址栏 .header-url ===================== */
 .header-url{
@@ -265,5 +279,16 @@ body{
   .header-tabs .tab .en{font-size:10px}
 }
 
-</style></head><body><div class="wrap"><svg class="wrap-bg" width="98vw" height="99vh" viewBox="0 0 400 400"><defs><linearGradient id="gradient1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="20%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="40%" stop-color="#c4efff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#e7c4ff" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#c4d6ff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#a3bbff" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#73dcfe" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient4" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#fec0dd" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#a3bbff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient5" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#c4d6ff" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#e7c4ff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient6" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="40%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#c4efff" stop-opacity="0.2"></stop><stop offset="90%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><radialGradient id="gradient7" fx="50%" fy="50%" r="65%" spreadMethod="pad"><stop offset="0%" stop-color="#eefafe" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></radialGradient></defs><rect x="50" y="0" width="50" height="400" style="fill:url(#gradient1)"></rect><rect x="100" y="0" width="50" height="400" style="fill:url(#gradient2)"></rect><rect x="150" y="0" width="50" height="400" style="fill:url(#gradient3)"></rect><rect x="200" y="0" width="50" height="400" style="fill:url(#gradient4)"></rect><rect x="250" y="0" width="50" height="400" style="fill:url(#gradient5)"></rect><rect x="300" y="0" width="50" height="400" style="fill:url(#gradient6)"></rect><circle cx="200" cy="200" r="300" style="fill:url(#gradient7)"></circle></svg><div class="main"><header><div class="header-tabs clearfix"><a href="javascript: void(0);" class="tab"><span>New Tab<span class="en">新建标签页</span></span> <i></i> </a><a href="javascript: void(0);" class="tab-add"></a><div class="tabs-tool"><a href="javascript: void(0);" class="btn-min"></a> <a href="javascript: void(0);" class="btn-max"></a> <a href="javascript: void(0);" class="btn-close"></a></div></div><div class="header-url clearfix"><svg style="display:none"><defs><g id="arrow"><path d="M8,2 L1,8 8,14"></path><path d="M2,8 L15,8"></path></g></defs></svg> <a href="javascript: void(0);" class="btn-back"><svg width="16" height="16"><use class="arrow" xlink:href="#arrow"></use></svg> </a><a href="javascript: void(0);" class="btn-next"><svg width="16" height="16"><use class="arrow" xlink:href="#arrow"></use></svg> </a><a href="javascript: void(0);" class="btn-refresh"><svg width="16" height="16"><path class="refresh-arc" d="M15,8  A7,7 0 1,1 8,1"></path><polyline points="8,-3  11,1  8,5"></polyline></svg> </a><input type="text" readonly="readonly" class="url-value"></div></header><div class="main-content"><h5><span>Page Not Found<i></i></span><span class="sub-en">网页找不到惹 ╥﹏╥...</span></h5><p>You'll be redirected to www.paomfz.com shortly<span class="sub-en">稍后将自动跳转到 www.paomfz.com</span></p></div></div></div><script type="text/javascript">window.onload=function(){document.getElementsByClassName("url-value")[0].value=location.href;setTimeout(function(){location.href='https://www.paomfz.com'},5000)}</script>
+</style></head><body><div class="wrap"><svg class="wrap-bg" width="98vw" height="99vh" viewBox="0 0 400 400"><defs><linearGradient id="gradient1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="20%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="40%" stop-color="#c4efff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#e7c4ff" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#c4d6ff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#a3bbff" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#73dcfe" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient4" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#fec0dd" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#a3bbff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient5" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="30%" stop-color="#c4d6ff" stop-opacity="0.2"></stop><stop offset="50%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#e7c4ff" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><linearGradient id="gradient6" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="40%" stop-color="#fff" stop-opacity="0.2"></stop><stop offset="70%" stop-color="#c4efff" stop-opacity="0.2"></stop><stop offset="90%" stop-color="#fff" stop-opacity="0.2"></stop></linearGradient><radialGradient id="gradient7" fx="50%" fy="50%" r="65%" spreadMethod="pad"><stop offset="0%" stop-color="#eefafe" stop-opacity="0.2"></stop><stop offset="100%" stop-color="#fff" stop-opacity="0.2"></stop></radialGradient></defs><rect x="50" y="0" width="50" height="400" style="fill:url(#gradient1)"></rect><rect x="100" y="0" width="50" height="400" style="fill:url(#gradient2)"></rect><rect x="150" y="0" width="50" height="400" style="fill:url(#gradient3)"></rect><rect x="200" y="0" width="50" height="400" style="fill:url(#gradient4)"></rect><rect x="250" y="0" width="50" height="400" style="fill:url(#gradient5)"></rect><rect x="300" y="0" width="50" height="400" style="fill:url(#gradient6)"></rect><circle cx="200" cy="200" r="300" style="fill:url(#gradient7)"></circle></svg><div class="main"><header><div class="header-tabs clearfix">
+  <a href="javascript:void(0);" class="tab" role="button" aria-label="New Tab 新建标签页">
+    <span>New Tab<span class="en">新建标签页</span></span>
+    <i aria-hidden="true"></i>
+  </a>
+  <a href="javascript:void(0);" class="tab-add" role="button" aria-label="新建标签页"></a>
+  <div class="tabs-tool">
+    <a href="javascript:void(0);" class="btn-min" role="button" aria-label="最小化"></a>
+    <a href="javascript:void(0);" class="btn-max" role="button" aria-label="最大化"></a>
+    <a href="javascript:void(0);" class="btn-close" role="button" aria-label="关闭窗口"></a>
+  </div>
+</div><div class="header-url clearfix"><svg style="display:none"><defs><g id="arrow"><path d="M8,2 L1,8 8,14"></path><path d="M2,8 L15,8"></path></g></defs></svg> <a href="javascript: void(0);" class="btn-back"><svg width="16" height="16"><use class="arrow" xlink:href="#arrow"></use></svg> </a><a href="javascript: void(0);" class="btn-next"><svg width="16" height="16"><use class="arrow" xlink:href="#arrow"></use></svg> </a><a href="javascript: void(0);" class="btn-refresh"><svg width="16" height="16"><path class="refresh-arc" d="M15,8  A7,7 0 1,1 8,1"></path><polyline points="8,-3  11,1  8,5"></polyline></svg> </a><input type="text" readonly="readonly" class="url-value"></div></header><div class="main-content"><h5><span>Page Not Found<i></i></span><span class="sub-en">网页找不到惹 ╥﹏╥...</span></h5><p>You'll be redirected to www.paomfz.com shortly<span class="sub-en">稍后将自动跳转到 www.paomfz.com</span></p></div></div></div><script type="text/javascript">window.onload=function(){document.getElementsByClassName("url-value")[0].value=location.href;setTimeout(function(){location.href='https://www.paomfz.com'},5000)}</script>
 </body></html>
